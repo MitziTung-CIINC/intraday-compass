@@ -4,9 +4,21 @@
 
 > 只读工具：不连接券商账户，不读取资金，不具备下单能力。公开行情接口没有交易所授权实时等级或可用性承诺，不应替代券商终端。
 
+## Codex Skill
+
+仓库内置可单独安装的 [`intraday-compass` Skill](skills/intraday-compass/SKILL.md)，用于让 Codex 安装、启动、验证和维护本工具，并协助配置 A 股或场内 ETF 追踪、检查行情连接、记录真实成交及分析已闭合的做 T 周期。
+
+在 Codex 中可直接提出：
+
+```text
+请从 https://github.com/MitziTung-CIINC/intraday-compass/tree/main/skills/intraday-compass 安装 intraday-compass Skill
+```
+
+安装后使用 `$intraday-compass` 调用。Skill 不连接券商或执行交易；不使用 Codex 的用户仍可按下方方式直接运行应用。
+
 ## 下载与启动
 
-需要先安装 [Node.js 22 或更高版本](https://nodejs.org/)。项目不需要 Python、Codex 或额外行情 skill。
+需要先安装 [Node.js 22 或更高版本](https://nodejs.org/)。直接运行项目不需要 Python、Codex 或额外行情 Skill。
 
 ### Windows
 
