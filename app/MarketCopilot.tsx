@@ -88,6 +88,15 @@ type FeedConfig = {
   subscribeMessage: string;
 };
 
+const PUBLIC_TRADE_LEDGER_KEY = "t0-public-actual-trades-v1";
+
+function usesBrowserTradeLedger() {
+  if (typeof window === "undefined") return false;
+  return !["localhost", "127.0.0.1", "::1"].includes(
+    window.location.hostname,
+  );
+}
+
 type WaveGuideConfig = {
   enabled: boolean;
   aHigh: number;
@@ -163,10 +172,10 @@ const EMPTY_HOLDING_DRAFT: HoldingDraft = {
 
 const DEFAULT_CONFIG: FeedConfig = {
   mode: "rest",
-  providerName: "东方财富官方行情桥",
+  providerName: "免费公开行情（东方财富）",
   delayType: "realtime",
   maxAgeSeconds: 15,
-  url: "http://localhost:8765/quote?symbol={symbol}&market={market}",
+  url: "/quote?symbol={symbol}&market={market}",
   interval: 1000,
   pricePath: "data.price",
   previousClosePath: "data.previousClose",
@@ -1141,6 +1150,23 @@ export default function MarketCopilot() {
   useEffect(() => {
     let active = true;
     const loadTrades = async () => {
+      if (usesBrowserTradeLedger()) {
+        try {
+          const savedTrades = window.localStorage.getItem(
+            PUBLIC_TRADE_LEDGER_KEY,
+          );
+          const parsed = savedTrades
+            ? (JSON.parse(savedTrades) as ActualTrade[])
+            : [];
+          if (active) setTrades(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          if (active) {
+            setTrades([]);
+            setFeedMessage("浏览器中的操作台账无法读取，已使用新的独立台账");
+          }
+        }
+        return;
+      }
       try {
         const response = await fetch("/api/trades", { cache: "no-store" });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1161,6 +1187,14 @@ export default function MarketCopilot() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!storageReady || !usesBrowserTradeLedger()) return;
+    window.localStorage.setItem(
+      PUBLIC_TRADE_LEDGER_KEY,
+      JSON.stringify(trades),
+    );
+  }, [storageReady, trades]);
 
   useEffect(() => {
     if (!monitoringActive) {
@@ -1672,23 +1706,25 @@ export default function MarketCopilot() {
       price,
       fee,
     };
-    try {
-      const response = await fetch("/api/trades", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(actualTrade),
-      });
-      if (!response.ok) {
-        const payload = (await response.json()) as { error?: string };
-        throw new Error(payload.error || `HTTP ${response.status}`);
+    if (!usesBrowserTradeLedger()) {
+      try {
+        const response = await fetch("/api/trades", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(actualTrade),
+        });
+        if (!response.ok) {
+          const payload = (await response.json()) as { error?: string };
+          throw new Error(payload.error || `HTTP ${response.status}`);
+        }
+      } catch (error) {
+        setFeedMessage(
+          `真实成交未记录：${
+            error instanceof Error ? error.message : "本地归档不可用"
+          }`,
+        );
+        return;
       }
-    } catch (error) {
-      setFeedMessage(
-        `真实成交未记录：${
-          error instanceof Error ? error.message : "本地归档不可用"
-        }`,
-      );
-      return;
     }
 
     setHoldings((current) =>

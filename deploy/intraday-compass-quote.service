@@ -1,0 +1,20 @@
+[Unit]
+Description=Intraday Compass free Eastmoney quote bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=intraday-compass
+Group=intraday-compass
+WorkingDirectory=/opt/intraday-compass
+Environment=HOST=127.0.0.1
+Environment=PORT=8765
+ExecStart=/usr/bin/node /opt/intraday-compass/tools/realtime_quote_bridge.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

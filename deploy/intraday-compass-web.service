@@ -1,0 +1,21 @@
+[Unit]
+Description=Intraday Compass web application
+After=network-online.target intraday-compass-quote.service
+Wants=network-online.target
+Requires=intraday-compass-quote.service
+
+[Service]
+Type=simple
+User=intraday-compass
+Group=intraday-compass
+WorkingDirectory=/opt/intraday-compass
+Environment=NODE_ENV=production
+Environment=QUOTE_BRIDGE_URL=http://127.0.0.1:8765
+ExecStart=/usr/bin/node /opt/intraday-compass/node_modules/vinext/dist/cli.js start -p 4173 -H 127.0.0.1
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
