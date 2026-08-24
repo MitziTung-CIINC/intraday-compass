@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="500" viewBox="0 0 1280 500" role="img" aria-labelledby="title desc">
+  <title id="title">分时罗盘本地数据边界</title>
+  <desc id="desc">公开行情只流入本机。持仓配置、真实成交台账和模型计算均保存在用户电脑上，项目不连接券商账户。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071321"/><stop offset="1" stop-color="#0d2335"/></linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#53e0b1"/></marker>
+  </defs>
+  <rect width="1280" height="500" rx="24" fill="url(#bg)"/>
+  <text x="54" y="58" fill="#f4f8fb" font-size="30" font-weight="700" font-family="Arial, Microsoft YaHei, sans-serif">数据与隐私边界</text>
+  <text x="54" y="91" fill="#91a9ba" font-size="16" font-family="Arial, Microsoft YaHei, sans-serif">行情数据进入本机；持仓与成交记录默认留在本机；券商账户始终位于系统边界之外。</text>
+
+  <g font-family="Arial, Microsoft YaHei, sans-serif">
+    <g transform="translate(54 145)">
+      <rect width="240" height="190" rx="18" fill="#102a3d" stroke="#2e607b"/>
+      <text x="120" y="42" text-anchor="middle" fill="#57d8ff" font-size="20" font-weight="700">外部公开行情</text>
+      <text x="30" y="86" fill="#9bb1c1" font-size="15">• 东方财富公开接口</text>
+      <text x="30" y="116" fill="#9bb1c1" font-size="15">• 可选自有 REST / WebSocket</text>
+      <text x="30" y="160" fill="#6f8798" font-size="14">仅用于行情读取与校验</text>
+    </g>
+
+    <g transform="translate(370 120)">
+      <rect width="570" height="285" rx="24" fill="#0c1d2b" stroke="#53e0b1" stroke-width="2"/>
+      <rect x="22" y="20" width="150" height="30" rx="15" fill="#123d38"/>
+      <text x="97" y="41" text-anchor="middle" fill="#80ebca" font-size="15" font-weight="700">用户电脑 · 本地边界</text>
+      <g transform="translate(30 78)">
+        <rect width="155" height="92" rx="14" fill="#142d40" stroke="#2e607b"/>
+        <text x="77" y="34" text-anchor="middle" fill="#dff3ff" font-size="17" font-weight="700">行情桥</text>
+        <text x="77" y="62" text-anchor="middle" fill="#93aaba" font-size="14">127.0.0.1:8765</text>
+      </g>
+      <g transform="translate(208 78)">
+        <rect width="155" height="92" rx="14" fill="#142d40" stroke="#2e607b"/>
+        <text x="77" y="34" text-anchor="middle" fill="#dff3ff" font-size="17" font-weight="700">模型与页面</text>
+        <text x="77" y="62" text-anchor="middle" fill="#93aaba" font-size="14">信号计算与展示</text>
+      </g>
+      <g transform="translate(386 78)">
+        <rect width="155" height="92" rx="14" fill="#142d40" stroke="#2e607b"/>
+        <text x="77" y="34" text-anchor="middle" fill="#dff3ff" font-size="17" font-weight="700">持仓配置</text>
+        <text x="77" y="62" text-anchor="middle" fill="#93aaba" font-size="14">浏览器 localStorage</text>
+      </g>
+      <g transform="translate(119 193)">
+        <rect width="330" height="64" rx="14" fill="#142d40" stroke="#2e607b"/>
+        <text x="165" y="28" text-anchor="middle" fill="#dff3ff" font-size="17" font-weight="700">真实成交台账与闭环统计</text>
+        <text x="165" y="50" text-anchor="middle" fill="#93aaba" font-size="14">本机数据库 · 用户手工录入</text>
+      </g>
+    </g>
+
+    <g transform="translate(1015 145)">
+      <rect width="210" height="190" rx="18" fill="#261b24" stroke="#9e5368"/>
+      <circle cx="105" cy="66" r="35" fill="none" stroke="#f28b82" stroke-width="4"/>
+      <path d="M80 41L130 91" stroke="#f28b82" stroke-width="5"/>
+      <text x="105" y="132" text-anchor="middle" fill="#ffd5d1" font-size="19" font-weight="700">券商账户</text>
+      <text x="105" y="159" text-anchor="middle" fill="#cda6af" font-size="14">不登录 · 不读取 · 不下单</text>
+    </g>
+  </g>
+
+  <path d="M294 240H355" stroke="#53e0b1" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M955 240H995" stroke="#9e5368" stroke-width="2" stroke-dasharray="7 7"/>
+  <text x="975" y="222" text-anchor="middle" fill="#c77b8e" font-size="13" font-family="Arial, Microsoft YaHei, sans-serif">无连接</text>
+
+  <rect x="54" y="440" width="1172" height="32" rx="10" fill="#0b1c2a"/>
+  <text x="640" y="462" text-anchor="middle" fill="#9db3c1" font-size="14" font-family="Arial, Microsoft YaHei, sans-serif">清理浏览器数据或删除项目目录可能造成记录丢失；长期使用前请自行建立本地备份。</text>
+</svg>

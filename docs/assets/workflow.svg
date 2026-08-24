@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="430" viewBox="0 0 1280 430" role="img" aria-labelledby="title desc">
+  <title id="title">分时罗盘系统工作流</title>
+  <desc id="desc">公开行情经过本地行情桥、数据校验和T0模型后形成观察、确认或冻结状态，真实成交由用户手工记录并用于复盘。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071321"/>
+      <stop offset="1" stop-color="#0d2335"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#27d4ff"/>
+      <stop offset="1" stop-color="#53e0b1"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#5f819a"/>
+    </marker>
+    <filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity=".25"/></filter>
+  </defs>
+  <rect width="1280" height="430" rx="24" fill="url(#bg)"/>
+  <text x="54" y="62" fill="#f4f8fb" font-size="30" font-weight="700" font-family="Arial, Microsoft YaHei, sans-serif">从行情到复盘：一条可核验的本地工作流</text>
+  <text x="54" y="94" fill="#91a9ba" font-size="16" font-family="Arial, Microsoft YaHei, sans-serif">数据采集、质量控制、信号解释与真实成交复盘相互分离；系统不连接券商，也不发送委托。</text>
+
+  <g filter="url(#shadow)" font-family="Arial, Microsoft YaHei, sans-serif">
+    <g transform="translate(45 145)">
+      <rect width="180" height="150" rx="16" fill="#102a3d" stroke="#2e607b"/>
+      <circle cx="34" cy="35" r="13" fill="#27d4ff" opacity=".9"/>
+      <text x="58" y="42" fill="#eaf7ff" font-size="19" font-weight="700">公开行情</text>
+      <text x="24" y="82" fill="#9bb1c1" font-size="15">最新价快照</text>
+      <text x="24" y="108" fill="#9bb1c1" font-size="15">1 分钟 / 日 K</text>
+      <text x="24" y="134" fill="#9bb1c1" font-size="15">指数与行业序列</text>
+    </g>
+    <g transform="translate(260 145)">
+      <rect width="180" height="150" rx="16" fill="#102a3d" stroke="#2e607b"/>
+      <circle cx="34" cy="35" r="13" fill="#42d6bf" opacity=".9"/>
+      <text x="58" y="42" fill="#eaf7ff" font-size="19" font-weight="700">本地行情桥</text>
+      <text x="24" y="82" fill="#9bb1c1" font-size="15">统一字段与市场</text>
+      <text x="24" y="108" fill="#9bb1c1" font-size="15">记录源时间 / 接收时间</text>
+      <text x="24" y="134" fill="#9bb1c1" font-size="15">仅监听本机端口</text>
+    </g>
+    <g transform="translate(475 145)">
+      <rect width="180" height="150" rx="16" fill="#102a3d" stroke="#2e607b"/>
+      <circle cx="34" cy="35" r="13" fill="#f1b94c" opacity=".95"/>
+      <text x="58" y="42" fill="#eaf7ff" font-size="19" font-weight="700">数据质量门</text>
+      <text x="24" y="82" fill="#9bb1c1" font-size="15">完整性与新鲜度</text>
+      <text x="24" y="108" fill="#9bb1c1" font-size="15">快照 / 分钟线偏差</text>
+      <text x="24" y="134" fill="#9bb1c1" font-size="15">异常时冻结信号</text>
+    </g>
+    <g transform="translate(690 145)">
+      <rect width="180" height="150" rx="16" fill="#102a3d" stroke="#2e607b"/>
+      <circle cx="34" cy="35" r="13" fill="#8b9dff" opacity=".95"/>
+      <text x="58" y="42" fill="#eaf7ff" font-size="19" font-weight="700">T0 模型</text>
+      <text x="24" y="82" fill="#9bb1c1" font-size="15">方向与位置</text>
+      <text x="24" y="108" fill="#9bb1c1" font-size="15">均价线与波段量能</text>
+      <text x="24" y="134" fill="#9bb1c1" font-size="15">多周期共振</text>
+    </g>
+    <g transform="translate(905 145)">
+      <rect width="150" height="150" rx="16" fill="#102a3d" stroke="#2e607b"/>
+      <circle cx="34" cy="35" r="13" fill="#53e0b1" opacity=".95"/>
+      <text x="58" y="42" fill="#eaf7ff" font-size="19" font-weight="700">状态输出</text>
+      <text x="24" y="82" fill="#9bb1c1" font-size="15">观察</text>
+      <text x="24" y="108" fill="#9bb1c1" font-size="15">确认</text>
+      <text x="24" y="134" fill="#9bb1c1" font-size="15">等待 / 冻结</text>
+    </g>
+    <g transform="translate(1090 145)">
+      <rect width="145" height="150" rx="16" fill="#102a3d" stroke="#2e607b"/>
+      <circle cx="34" cy="35" r="13" fill="#f28b82" opacity=".95"/>
+      <text x="58" y="42" fill="#eaf7ff" font-size="19" font-weight="700">手工复盘</text>
+      <text x="20" y="82" fill="#9bb1c1" font-size="15">录入成交回报</text>
+      <text x="20" y="108" fill="#9bb1c1" font-size="15">闭合周期匹配</text>
+      <text x="20" y="134" fill="#9bb1c1" font-size="15">费用与降本统计</text>
+    </g>
+  </g>
+
+  <g stroke="#5f819a" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <path d="M225 220H250"/><path d="M440 220H465"/><path d="M655 220H680"/><path d="M870 220H895"/><path d="M1055 220H1080"/>
+  </g>
+  <rect x="45" y="345" width="1190" height="42" rx="12" fill="#0b1c2a" stroke="#234a61"/>
+  <rect x="62" y="359" width="210" height="14" rx="7" fill="url(#accent)" opacity=".9"/>
+  <text x="296" y="372" fill="#a9bdca" font-size="15" font-family="Arial, Microsoft YaHei, sans-serif">核心原则：信号必须可解释，数据异常必须可见，真实交易必须由用户在券商端独立完成。</text>
+</svg>

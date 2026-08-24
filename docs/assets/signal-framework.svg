@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" role="img" aria-labelledby="title desc">
+  <title id="title">分时罗盘信号成熟框架</title>
+  <desc id="desc">五项硬门槛先行，再按位置、市场环境、均价线、量能和多周期共振计算成熟度，输出观察、确认、等待或冻结状态。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071321"/><stop offset="1" stop-color="#11273a"/></linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#6e899c"/></marker>
+  </defs>
+  <rect width="1280" height="560" rx="24" fill="url(#bg)"/>
+  <text x="54" y="58" fill="#f4f8fb" font-size="30" font-weight="700" font-family="Arial, Microsoft YaHei, sans-serif">B / S 信号成熟框架</text>
+  <text x="54" y="91" fill="#91a9ba" font-size="16" font-family="Arial, Microsoft YaHei, sans-serif">硬门槛不能被评分抵消；评分用于描述结构成熟度，不用于自动下单。</text>
+
+  <text x="54" y="142" fill="#d8e5ed" font-size="18" font-weight="700" font-family="Arial, Microsoft YaHei, sans-serif">第一层｜必须先通过的硬门槛</text>
+  <g font-family="Arial, Microsoft YaHei, sans-serif" font-size="15">
+    <g transform="translate(54 165)"><rect width="205" height="70" rx="13" fill="#102c3f" stroke="#2c6c89"/><text x="102" y="30" text-anchor="middle" fill="#57d8ff" font-weight="700">数据有效</text><text x="102" y="52" text-anchor="middle" fill="#9bb1c1">完整、新鲜、可校验</text></g>
+    <g transform="translate(279 165)"><rect width="205" height="70" rx="13" fill="#102c3f" stroke="#2c6c89"/><text x="102" y="30" text-anchor="middle" fill="#57d8ff" font-weight="700">底仓 / 回转可行</text><text x="102" y="52" text-anchor="middle" fill="#9bb1c1">可卖数量与规则明确</text></g>
+    <g transform="translate(504 165)"><rect width="205" height="70" rx="13" fill="#102c3f" stroke="#2c6c89"/><text x="102" y="30" text-anchor="middle" fill="#57d8ff" font-weight="700">方向明确</text><text x="102" y="52" text-anchor="middle" fill="#9bb1c1">正 T / 反 T / 箱体</text></g>
+    <g transform="translate(729 165)"><rect width="205" height="70" rx="13" fill="#102c3f" stroke="#2c6c89"/><text x="102" y="30" text-anchor="middle" fill="#57d8ff" font-weight="700">价差覆盖成本</text><text x="102" y="52" text-anchor="middle" fill="#9bb1c1">费用与滑点留有余量</text></g>
+    <g transform="translate(954 165)"><rect width="272" height="70" rx="13" fill="#102c3f" stroke="#2c6c89"/><text x="136" y="30" text-anchor="middle" fill="#57d8ff" font-weight="700">有效交易时段</text><text x="136" y="52" text-anchor="middle" fill="#9bb1c1">避开无效行情与强制闭环限制</text></g>
+  </g>
+
+  <path d="M640 246V280" stroke="#6e899c" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="54" y="310" fill="#d8e5ed" font-size="18" font-weight="700" font-family="Arial, Microsoft YaHei, sans-serif">第二层｜结构成熟度评分</text>
+  <g font-family="Arial, Microsoft YaHei, sans-serif">
+    <g transform="translate(54 334)"><rect width="215" height="98" rx="15" fill="#17243e" stroke="#596db0"/><text x="24" y="34" fill="#b7c5ff" font-size="17" font-weight="700">位置与支撑</text><text x="190" y="34" text-anchor="end" fill="#fff" font-size="24" font-weight="700">25%</text><text x="24" y="67" fill="#9daec0" font-size="14">箱体、支撑、压力、偏离</text></g>
+    <g transform="translate(289 334)"><rect width="215" height="98" rx="15" fill="#17243e" stroke="#596db0"/><text x="24" y="34" fill="#b7c5ff" font-size="17" font-weight="700">市场环境</text><text x="190" y="34" text-anchor="end" fill="#fff" font-size="24" font-weight="700">20%</text><text x="24" y="67" fill="#9daec0" font-size="14">指数、个股方向与同步</text></g>
+    <g transform="translate(524 334)"><rect width="215" height="98" rx="15" fill="#17243e" stroke="#596db0"/><text x="24" y="34" fill="#b7c5ff" font-size="17" font-weight="700">均价线结构</text><text x="190" y="34" text-anchor="end" fill="#fff" font-size="24" font-weight="700">20%</text><text x="24" y="67" fill="#9daec0" font-size="14">回踩、偏离、同步抬升</text></g>
+    <g transform="translate(759 334)"><rect width="215" height="98" rx="15" fill="#17243e" stroke="#596db0"/><text x="24" y="34" fill="#b7c5ff" font-size="17" font-weight="700">波段量能</text><text x="190" y="34" text-anchor="end" fill="#fff" font-size="24" font-weight="700">20%</text><text x="24" y="67" fill="#9daec0" font-size="14">5 分钟放量与衰减阶段</text></g>
+    <g transform="translate(994 334)"><rect width="232" height="98" rx="15" fill="#17243e" stroke="#596db0"/><text x="24" y="34" fill="#b7c5ff" font-size="17" font-weight="700">多周期共振</text><text x="207" y="34" text-anchor="end" fill="#fff" font-size="24" font-weight="700">15%</text><text x="24" y="67" fill="#9daec0" font-size="14">1 / 5 分钟九转结构</text></g>
+  </g>
+
+  <g transform="translate(54 475)" font-family="Arial, Microsoft YaHei, sans-serif">
+    <rect width="1172" height="48" rx="14" fill="#0c1b29" stroke="#2b4c61"/>
+    <circle cx="32" cy="24" r="8" fill="#7d93a3"/><text x="51" y="30" fill="#aabcc8" font-size="15">等待 / 冻结</text>
+    <circle cx="237" cy="24" r="8" fill="#f1b94c"/><text x="256" y="30" fill="#d9c99f" font-size="15">55–74：观察候选</text>
+    <circle cx="505" cy="24" r="8" fill="#53e0b1"/><text x="524" y="30" fill="#bcebdc" font-size="15">≥75 且硬门槛通过：确认</text>
+    <text x="1144" y="30" text-anchor="end" fill="#71899a" font-size="14">观察不产生自动委托</text>
+  </g>
+</svg>
