@@ -11,6 +11,8 @@
 
 仓库内的 `deploy/` 目录包含 systemd 和 Nginx 模板。部署时需安装 Node.js 22、pnpm、Git、Nginx 和 Certbot，再将仓库放到 `/opt/intraday-compass`，执行 `pnpm install --frozen-lockfile` 与 `pnpm build`。
 
+在全新 Debian/Ubuntu ECS 上，也可以由 root 审阅后执行仓库中的 `deploy/install-aliyun.sh`。脚本只新增本项目的系统用户、两个 systemd 服务和 `00t00.com` 站点文件，不会修改其他域名的 Nginx 文件；HTTPS 证书应在 HTTP 验证通过后单独签发。
+
 ## 更新版本
 
 ```bash
