@@ -51,6 +51,8 @@ next-env.d.ts
 # local/private application data
 /data/
 /public/data/
+!/public/data/
+!/public/data/bond-radar.json
 *.db
 *.sqlite
 *.sqlite3

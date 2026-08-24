@@ -1,0 +1,3860 @@
+{
+  "version": 3,
+  "generatedAt": "2026-08-24T07:39:51.357Z",
+  "generatedAtChina": "2026-08-24 15:39:51",
+  "tradeDate": "2026-08-24",
+  "latestMinute": "15:00",
+  "marketPhase": "已收盘",
+  "source": {
+    "provider": "东方财富公开行情",
+    "access": "公开延时行情",
+    "baseline": "前一交易日收盘价",
+    "notice": "公开行情可能延迟、限流或调整，不替代交易所或券商行情。"
+  },
+  "methodology": {
+    "ranking": "专业评分 = 日内向上结构30% + 有效波动25% + 活跃度25% + 联动弹性20%；有效波动包含相对前收的跳空位移",
+    "sync": "同步率 = 正向1分钟路径相关性×70% + 同向分钟占比×30%；均以前一交易日收盘价归一化",
+    "liquidity": "默认剔除转债成交额低于1000万元、正股成交额低于3000万元或正股带ST/退市风险标识的组合",
+    "shortlist": "先统一要求正股有效波动不低于2%、股债同处向上结构且转债捕获比不低于0.25，再对前24名计算分钟同步率并纯模型选出最多10组"
+  },
+  "universe": {
+    "providerTotal": 319,
+    "mapped": 319,
+    "complete": 311,
+    "liquid": 261,
+    "eligible": 13,
+    "usedLiquidityFallback": false
+  },
+  "items": [
+    {
+      "rank": 1,
+      "professionalScore": 87.88,
+      "volatilityScore": 6.53,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 100,
+        "bondRangePosition": 92.44,
+        "captureRatio": 0.353
+      },
+      "factors": {
+        "volatility": 90.81,
+        "activity": 90.58,
+        "trend": 97.71,
+        "linkage": 62.72,
+        "premiumQuality": 98.06,
+        "captureRatio": 0.353,
+        "returnPersistence": 92.31,
+        "meanReversion": 3.49,
+        "oscillation": 75.33,
+        "stockRangePosition": 100,
+        "bondRangePosition": 92.44,
+        "style": "向上联动",
+        "preliminaryScore": 87.2
+      },
+      "bond": {
+        "code": "127061",
+        "name": "美锦转债",
+        "price": 114.484,
+        "previousClose": 110.618,
+        "open": 110.999,
+        "high": 114.8,
+        "low": 110.8,
+        "changePct": 3.49,
+        "amplitude": 3.78,
+        "intradayAmplitude": 3.62,
+        "amount": 686306958,
+        "turnoverRate": 21.64,
+        "volumeRatio": 2.68,
+        "conversionPrice": 3.47,
+        "conversionValue": 112.104,
+        "conversionPremiumRate": 2.12,
+        "pureBondValue": 108.502
+      },
+      "stock": {
+        "code": "000723",
+        "name": "美锦能源",
+        "price": 3.89,
+        "previousClose": 3.54,
+        "open": 3.56,
+        "high": 3.89,
+        "low": 3.56,
+        "changePct": 9.89,
+        "amplitude": 9.89,
+        "intradayAmplitude": 9.32,
+        "amount": 697970718,
+        "turnoverRate": 4.15,
+        "volumeRatio": 1.45
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.8708,
+        "directionAgreement": 1,
+        "syncRate": 91,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0.344,
+            "stockReturn": 0.565
+          },
+          {
+            "time": "09:34",
+            "bondReturn": 0.893,
+            "stockReturn": 3.39
+          },
+          {
+            "time": "09:38",
+            "bondReturn": 1.678,
+            "stockReturn": 6.215
+          },
+          {
+            "time": "09:42",
+            "bondReturn": 2.75,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "09:46",
+            "bondReturn": 2.535,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "09:50",
+            "bondReturn": 3.012,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "09:54",
+            "bondReturn": 3.094,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "09:58",
+            "bondReturn": 2.976,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:02",
+            "bondReturn": 2.755,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:06",
+            "bondReturn": 3.045,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:10",
+            "bondReturn": 2.797,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:14",
+            "bondReturn": 2.922,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 3.026,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 3.178,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:26",
+            "bondReturn": 3.07,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:30",
+            "bondReturn": 3.061,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:34",
+            "bondReturn": 2.963,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:38",
+            "bondReturn": 2.85,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:42",
+            "bondReturn": 2.967,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:46",
+            "bondReturn": 2.946,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:50",
+            "bondReturn": 2.949,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:54",
+            "bondReturn": 3.01,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "10:58",
+            "bondReturn": 3.123,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:02",
+            "bondReturn": 3.048,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:06",
+            "bondReturn": 2.994,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:10",
+            "bondReturn": 3.047,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 3.034,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:18",
+            "bondReturn": 3.031,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:22",
+            "bondReturn": 3.02,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:26",
+            "bondReturn": 3.124,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "11:30",
+            "bondReturn": 3.13,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:04",
+            "bondReturn": 3.057,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 3.053,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 3.009,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 3.13,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 3.148,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 3.142,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 3.123,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 3.056,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:36",
+            "bondReturn": 3.449,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 3.37,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 3.688,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 3.433,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:52",
+            "bondReturn": 3.066,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 3.118,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 3.15,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 3.211,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 3.058,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 3.001,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 3.176,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 3.52,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 3.383,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 3.152,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 3.432,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 3.544,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 3.526,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 3.283,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 3.274,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 3.291,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 3.525,
+            "stockReturn": 9.887
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 3.495,
+            "stockReturn": 9.887
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -6.4,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    },
+    {
+      "rank": 2,
+      "professionalScore": 85.39,
+      "volatilityScore": 9.17,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 97.25,
+        "bondRangePosition": 94.65,
+        "captureRatio": 0.372
+      },
+      "factors": {
+        "volatility": 98.31,
+        "activity": 94.37,
+        "trend": 69.73,
+        "linkage": 67.63,
+        "premiumQuality": 100,
+        "captureRatio": 0.372,
+        "returnPersistence": 12.21,
+        "meanReversion": 87.79,
+        "oscillation": 97.15,
+        "stockRangePosition": 97.25,
+        "bondRangePosition": 94.65,
+        "style": "向上联动",
+        "preliminaryScore": 82.62
+      },
+      "bond": {
+        "code": "113667",
+        "name": "春23转债",
+        "price": 183.181,
+        "previousClose": 181.307,
+        "open": 180.9,
+        "high": 184,
+        "low": 168.7,
+        "changePct": 1.03,
+        "amplitude": 8.44,
+        "intradayAmplitude": 8.44,
+        "amount": 932444249,
+        "turnoverRate": 240.51,
+        "volumeRatio": 1.1,
+        "conversionPrice": 9.95,
+        "conversionValue": 186.633,
+        "conversionPremiumRate": -1.85,
+        "pureBondValue": 100.654
+      },
+      "stock": {
+        "code": "603890",
+        "name": "春秋电子",
+        "price": 18.57,
+        "previousClose": 18.07,
+        "open": 17.9,
+        "high": 18.62,
+        "low": 16.8,
+        "changePct": 2.77,
+        "amplitude": 10.07,
+        "intradayAmplitude": 10.07,
+        "amount": 748812310,
+        "turnoverRate": 8.98,
+        "volumeRatio": 0.98
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.9909,
+        "directionAgreement": 0.9585,
+        "syncRate": 98,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": -0.224,
+            "stockReturn": -0.941
+          },
+          {
+            "time": "09:34",
+            "bondReturn": -0.693,
+            "stockReturn": -0.83
+          },
+          {
+            "time": "09:38",
+            "bondReturn": -1.811,
+            "stockReturn": -1.992
+          },
+          {
+            "time": "09:42",
+            "bondReturn": -1.972,
+            "stockReturn": -1.826
+          },
+          {
+            "time": "09:46",
+            "bondReturn": -2.993,
+            "stockReturn": -2.767
+          },
+          {
+            "time": "09:50",
+            "bondReturn": -2.837,
+            "stockReturn": -2.767
+          },
+          {
+            "time": "09:54",
+            "bondReturn": -2.672,
+            "stockReturn": -2.988
+          },
+          {
+            "time": "09:58",
+            "bondReturn": -2.923,
+            "stockReturn": -3.265
+          },
+          {
+            "time": "10:02",
+            "bondReturn": -3.805,
+            "stockReturn": -3.874
+          },
+          {
+            "time": "10:06",
+            "bondReturn": -3.716,
+            "stockReturn": -3.652
+          },
+          {
+            "time": "10:10",
+            "bondReturn": -3.473,
+            "stockReturn": -3.265
+          },
+          {
+            "time": "10:14",
+            "bondReturn": -4.14,
+            "stockReturn": -3.818
+          },
+          {
+            "time": "10:18",
+            "bondReturn": -4.175,
+            "stockReturn": -4.04
+          },
+          {
+            "time": "10:22",
+            "bondReturn": -4.591,
+            "stockReturn": -4.095
+          },
+          {
+            "time": "10:26",
+            "bondReturn": -4.471,
+            "stockReturn": -3.985
+          },
+          {
+            "time": "10:30",
+            "bondReturn": -4.551,
+            "stockReturn": -4.538
+          },
+          {
+            "time": "10:34",
+            "bondReturn": -4.27,
+            "stockReturn": -4.206
+          },
+          {
+            "time": "10:38",
+            "bondReturn": -4.658,
+            "stockReturn": -4.759
+          },
+          {
+            "time": "10:42",
+            "bondReturn": -4.926,
+            "stockReturn": -5.091
+          },
+          {
+            "time": "10:46",
+            "bondReturn": -5.262,
+            "stockReturn": -5.423
+          },
+          {
+            "time": "10:50",
+            "bondReturn": -5.311,
+            "stockReturn": -5.534
+          },
+          {
+            "time": "10:54",
+            "bondReturn": -5.288,
+            "stockReturn": -5.589
+          },
+          {
+            "time": "10:58",
+            "bondReturn": -6.271,
+            "stockReturn": -6.364
+          },
+          {
+            "time": "11:02",
+            "bondReturn": -6.436,
+            "stockReturn": -6.143
+          },
+          {
+            "time": "11:06",
+            "bondReturn": -6.532,
+            "stockReturn": -6.419
+          },
+          {
+            "time": "11:10",
+            "bondReturn": -6.217,
+            "stockReturn": -6.087
+          },
+          {
+            "time": "11:14",
+            "bondReturn": -6.263,
+            "stockReturn": -6.143
+          },
+          {
+            "time": "11:18",
+            "bondReturn": -6.08,
+            "stockReturn": -5.811
+          },
+          {
+            "time": "11:22",
+            "bondReturn": -6.163,
+            "stockReturn": -5.811
+          },
+          {
+            "time": "11:26",
+            "bondReturn": -5.822,
+            "stockReturn": -5.866
+          },
+          {
+            "time": "11:30",
+            "bondReturn": -5.801,
+            "stockReturn": -5.811
+          },
+          {
+            "time": "13:04",
+            "bondReturn": -6.545,
+            "stockReturn": -6.53
+          },
+          {
+            "time": "13:08",
+            "bondReturn": -6.257,
+            "stockReturn": -6.198
+          },
+          {
+            "time": "13:12",
+            "bondReturn": -6.565,
+            "stockReturn": -6.641
+          },
+          {
+            "time": "13:16",
+            "bondReturn": -6.428,
+            "stockReturn": -6.53
+          },
+          {
+            "time": "13:20",
+            "bondReturn": -6.517,
+            "stockReturn": -6.586
+          },
+          {
+            "time": "13:24",
+            "bondReturn": -6.376,
+            "stockReturn": -6.53
+          },
+          {
+            "time": "13:28",
+            "bondReturn": -6.499,
+            "stockReturn": -6.53
+          },
+          {
+            "time": "13:32",
+            "bondReturn": -6.567,
+            "stockReturn": -6.696
+          },
+          {
+            "time": "13:36",
+            "bondReturn": -6.645,
+            "stockReturn": -6.696
+          },
+          {
+            "time": "13:40",
+            "bondReturn": -6.826,
+            "stockReturn": -6.918
+          },
+          {
+            "time": "13:44",
+            "bondReturn": -5.92,
+            "stockReturn": -5.755
+          },
+          {
+            "time": "13:48",
+            "bondReturn": -6.503,
+            "stockReturn": -6.364
+          },
+          {
+            "time": "13:52",
+            "bondReturn": -6.567,
+            "stockReturn": -6.586
+          },
+          {
+            "time": "13:56",
+            "bondReturn": -6.59,
+            "stockReturn": -6.696
+          },
+          {
+            "time": "14:00",
+            "bondReturn": -6.539,
+            "stockReturn": -6.475
+          },
+          {
+            "time": "14:04",
+            "bondReturn": -6.577,
+            "stockReturn": -6.53
+          },
+          {
+            "time": "14:08",
+            "bondReturn": -6.478,
+            "stockReturn": -6.309
+          },
+          {
+            "time": "14:12",
+            "bondReturn": -5.975,
+            "stockReturn": -5.7
+          },
+          {
+            "time": "14:16",
+            "bondReturn": -6.397,
+            "stockReturn": -6.032
+          },
+          {
+            "time": "14:20",
+            "bondReturn": -6.007,
+            "stockReturn": -5.534
+          },
+          {
+            "time": "14:24",
+            "bondReturn": -3.136,
+            "stockReturn": -2.878
+          },
+          {
+            "time": "14:28",
+            "bondReturn": -3.715,
+            "stockReturn": -3.265
+          },
+          {
+            "time": "14:32",
+            "bondReturn": -3.867,
+            "stockReturn": -3.376
+          },
+          {
+            "time": "14:36",
+            "bondReturn": -2.994,
+            "stockReturn": -2.601
+          },
+          {
+            "time": "14:40",
+            "bondReturn": -0.309,
+            "stockReturn": 0.277
+          },
+          {
+            "time": "14:44",
+            "bondReturn": -0.186,
+            "stockReturn": 0.553
+          },
+          {
+            "time": "14:48",
+            "bondReturn": -0.71,
+            "stockReturn": 0.111
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 0.185,
+            "stockReturn": 0.996
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 1.335,
+            "stockReturn": 2.933
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 1.034,
+            "stockReturn": 2.767
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -1.74,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    },
+    {
+      "rank": 3,
+      "professionalScore": 82.21,
+      "volatilityScore": 4.15,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 100,
+        "bondRangePosition": 93.27,
+        "captureRatio": 1.104
+      },
+      "factors": {
+        "volatility": 78.95,
+        "activity": 90.02,
+        "trend": 69.71,
+        "linkage": 91.12,
+        "premiumQuality": 71.61,
+        "captureRatio": 1.104,
+        "returnPersistence": 48.51,
+        "meanReversion": 51.49,
+        "oscillation": 80.42,
+        "stockRangePosition": 100,
+        "bondRangePosition": 93.27,
+        "style": "向上联动",
+        "preliminaryScore": 81.38
+      },
+      "bond": {
+        "code": "123131",
+        "name": "奥飞转债",
+        "price": 292.789,
+        "previousClose": 286.702,
+        "open": 289,
+        "high": 293.632,
+        "low": 281.102,
+        "changePct": 2.12,
+        "amplitude": 4.37,
+        "intradayAmplitude": 4.37,
+        "amount": 461056259,
+        "turnoverRate": 50.68,
+        "volumeRatio": 1.28,
+        "conversionPrice": 10.05,
+        "conversionValue": 211.244,
+        "conversionPremiumRate": 38.6,
+        "pureBondValue": 111.57
+      },
+      "stock": {
+        "code": "300738",
+        "name": "奥飞数据",
+        "price": 21.23,
+        "previousClose": 20.83,
+        "open": 20.88,
+        "high": 21.23,
+        "low": 20.42,
+        "changePct": 1.92,
+        "amplitude": 3.89,
+        "intradayAmplitude": 3.89,
+        "amount": 841924461,
+        "turnoverRate": 4.1,
+        "volumeRatio": 0.73
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.8938,
+        "directionAgreement": 0.7925,
+        "syncRate": 86,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0.802,
+            "stockReturn": 0.24
+          },
+          {
+            "time": "09:34",
+            "bondReturn": -0.663,
+            "stockReturn": -0.048
+          },
+          {
+            "time": "09:38",
+            "bondReturn": -1.653,
+            "stockReturn": -1.152
+          },
+          {
+            "time": "09:42",
+            "bondReturn": -1.259,
+            "stockReturn": -0.864
+          },
+          {
+            "time": "09:46",
+            "bondReturn": -1.082,
+            "stockReturn": -0.864
+          },
+          {
+            "time": "09:50",
+            "bondReturn": -0.768,
+            "stockReturn": -0.432
+          },
+          {
+            "time": "09:54",
+            "bondReturn": -1.542,
+            "stockReturn": -1.2
+          },
+          {
+            "time": "09:58",
+            "bondReturn": -1.773,
+            "stockReturn": -1.872
+          },
+          {
+            "time": "10:02",
+            "bondReturn": -1.446,
+            "stockReturn": -1.584
+          },
+          {
+            "time": "10:06",
+            "bondReturn": -1.147,
+            "stockReturn": -1.344
+          },
+          {
+            "time": "10:10",
+            "bondReturn": -0.873,
+            "stockReturn": -0.768
+          },
+          {
+            "time": "10:14",
+            "bondReturn": -1.052,
+            "stockReturn": -1.008
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 0.213,
+            "stockReturn": 0.672
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 0.02,
+            "stockReturn": 0.624
+          },
+          {
+            "time": "10:26",
+            "bondReturn": -0.089,
+            "stockReturn": 0.432
+          },
+          {
+            "time": "10:30",
+            "bondReturn": -0.66,
+            "stockReturn": 0
+          },
+          {
+            "time": "10:34",
+            "bondReturn": -0.595,
+            "stockReturn": 0
+          },
+          {
+            "time": "10:38",
+            "bondReturn": -0.684,
+            "stockReturn": -0.048
+          },
+          {
+            "time": "10:42",
+            "bondReturn": -0.691,
+            "stockReturn": -0.048
+          },
+          {
+            "time": "10:46",
+            "bondReturn": -0.491,
+            "stockReturn": -0.336
+          },
+          {
+            "time": "10:50",
+            "bondReturn": -0.423,
+            "stockReturn": 0.192
+          },
+          {
+            "time": "10:54",
+            "bondReturn": -0.489,
+            "stockReturn": -0.144
+          },
+          {
+            "time": "10:58",
+            "bondReturn": -0.583,
+            "stockReturn": -0.528
+          },
+          {
+            "time": "11:02",
+            "bondReturn": -0.089,
+            "stockReturn": -0.144
+          },
+          {
+            "time": "11:06",
+            "bondReturn": -0.228,
+            "stockReturn": -0.384
+          },
+          {
+            "time": "11:10",
+            "bondReturn": -0.339,
+            "stockReturn": -0.72
+          },
+          {
+            "time": "11:14",
+            "bondReturn": -0.658,
+            "stockReturn": -0.912
+          },
+          {
+            "time": "11:18",
+            "bondReturn": -0.212,
+            "stockReturn": -0.48
+          },
+          {
+            "time": "11:22",
+            "bondReturn": -0.213,
+            "stockReturn": -0.432
+          },
+          {
+            "time": "11:26",
+            "bondReturn": -0.196,
+            "stockReturn": -0.432
+          },
+          {
+            "time": "11:30",
+            "bondReturn": -0.245,
+            "stockReturn": -0.336
+          },
+          {
+            "time": "13:04",
+            "bondReturn": -0.332,
+            "stockReturn": -0.528
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 0.131,
+            "stockReturn": -0.192
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 0.384,
+            "stockReturn": -0.336
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 0.632,
+            "stockReturn": -0.096
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 0.538,
+            "stockReturn": -0.336
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 0.873,
+            "stockReturn": 0.24
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 0.662,
+            "stockReturn": 0.048
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 0.643,
+            "stockReturn": -0.144
+          },
+          {
+            "time": "13:36",
+            "bondReturn": -0.119,
+            "stockReturn": -0.768
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 0.093,
+            "stockReturn": -0.48
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 0.123,
+            "stockReturn": -0.432
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 0.073,
+            "stockReturn": -0.624
+          },
+          {
+            "time": "13:52",
+            "bondReturn": -0.088,
+            "stockReturn": -0.816
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 0.034,
+            "stockReturn": -0.672
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 0.278,
+            "stockReturn": -0.432
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 0.488,
+            "stockReturn": -0.336
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 1.002,
+            "stockReturn": 0.576
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 1.464,
+            "stockReturn": 0.672
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 1.868,
+            "stockReturn": 0.816
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 2.05,
+            "stockReturn": 1.488
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 1.779,
+            "stockReturn": 1.2
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 1.719,
+            "stockReturn": 1.056
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 1.686,
+            "stockReturn": 0.912
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 1.604,
+            "stockReturn": 0.864
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 1.56,
+            "stockReturn": 1.104
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 1.862,
+            "stockReturn": 1.104
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 1.987,
+            "stockReturn": 1.392
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 2.136,
+            "stockReturn": 1.392
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 2.035,
+            "stockReturn": 1.776
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 2.123,
+            "stockReturn": 1.92
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": 0.2,
+        "relativeStrength": "强弱接近",
+        "warning": null
+      }
+    },
+    {
+      "rank": 4,
+      "professionalScore": 78.12,
+      "volatilityScore": 5.42,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 76.16,
+        "bondRangePosition": 86.63,
+        "captureRatio": 0.741
+      },
+      "factors": {
+        "volatility": 88.63,
+        "activity": 87.4,
+        "trend": 52.17,
+        "linkage": 89.14,
+        "premiumQuality": 83.23,
+        "captureRatio": 0.741,
+        "returnPersistence": 13.45,
+        "meanReversion": 86.55,
+        "oscillation": 88.87,
+        "stockRangePosition": 76.16,
+        "bondRangePosition": 86.63,
+        "style": "向上联动",
+        "preliminaryScore": 77.49
+      },
+      "bond": {
+        "code": "123245",
+        "name": "集智转债",
+        "price": 293.015,
+        "previousClose": 290.511,
+        "open": 290.511,
+        "high": 295.5,
+        "low": 276.919,
+        "changePct": 0.86,
+        "amplitude": 6.4,
+        "intradayAmplitude": 6.4,
+        "amount": 319983004,
+        "turnoverRate": 72.7,
+        "volumeRatio": 0.96,
+        "conversionPrice": 18.06,
+        "conversionValue": 227.409,
+        "conversionPremiumRate": 28.85,
+        "pureBondValue": 92.102
+      },
+      "stock": {
+        "code": "300553",
+        "name": "集智股份",
+        "price": 41.07,
+        "previousClose": 40.6,
+        "open": 40.43,
+        "high": 41.48,
+        "low": 39.76,
+        "changePct": 1.16,
+        "amplitude": 4.24,
+        "intradayAmplitude": 4.24,
+        "amount": 197397350,
+        "turnoverRate": 5.73,
+        "volumeRatio": 1.01
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.801,
+        "directionAgreement": 0.825,
+        "syncRate": 81,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0,
+            "stockReturn": -0.419
+          },
+          {
+            "time": "09:34",
+            "bondReturn": -1.194,
+            "stockReturn": 0.665
+          },
+          {
+            "time": "09:38",
+            "bondReturn": -2.413,
+            "stockReturn": -1.01
+          },
+          {
+            "time": "09:42",
+            "bondReturn": -1.715,
+            "stockReturn": -0.616
+          },
+          {
+            "time": "09:46",
+            "bondReturn": -2.186,
+            "stockReturn": -1.034
+          },
+          {
+            "time": "09:50",
+            "bondReturn": -1.072,
+            "stockReturn": 0.591
+          },
+          {
+            "time": "09:54",
+            "bondReturn": -2.033,
+            "stockReturn": -0.197
+          },
+          {
+            "time": "09:58",
+            "bondReturn": -2.004,
+            "stockReturn": -0.493
+          },
+          {
+            "time": "10:02",
+            "bondReturn": -1.619,
+            "stockReturn": -0.591
+          },
+          {
+            "time": "10:06",
+            "bondReturn": -1.209,
+            "stockReturn": 0.099
+          },
+          {
+            "time": "10:10",
+            "bondReturn": -0.556,
+            "stockReturn": 0.542
+          },
+          {
+            "time": "10:14",
+            "bondReturn": -1.075,
+            "stockReturn": -0.246
+          },
+          {
+            "time": "10:18",
+            "bondReturn": -1.015,
+            "stockReturn": -0.148
+          },
+          {
+            "time": "10:22",
+            "bondReturn": -0.977,
+            "stockReturn": -0.271
+          },
+          {
+            "time": "10:26",
+            "bondReturn": -0.7,
+            "stockReturn": -0.099
+          },
+          {
+            "time": "10:30",
+            "bondReturn": -0.819,
+            "stockReturn": -0.049
+          },
+          {
+            "time": "10:34",
+            "bondReturn": -0.412,
+            "stockReturn": 0.419
+          },
+          {
+            "time": "10:38",
+            "bondReturn": -0.67,
+            "stockReturn": -0.123
+          },
+          {
+            "time": "10:42",
+            "bondReturn": -0.706,
+            "stockReturn": -0.419
+          },
+          {
+            "time": "10:46",
+            "bondReturn": -0.696,
+            "stockReturn": -0.493
+          },
+          {
+            "time": "10:50",
+            "bondReturn": -0.53,
+            "stockReturn": -0.542
+          },
+          {
+            "time": "10:54",
+            "bondReturn": -0.912,
+            "stockReturn": -1.034
+          },
+          {
+            "time": "10:58",
+            "bondReturn": -1.163,
+            "stockReturn": -1.33
+          },
+          {
+            "time": "11:02",
+            "bondReturn": -1.209,
+            "stockReturn": -1.453
+          },
+          {
+            "time": "11:06",
+            "bondReturn": -1.53,
+            "stockReturn": -1.7
+          },
+          {
+            "time": "11:10",
+            "bondReturn": -1.069,
+            "stockReturn": -1.232
+          },
+          {
+            "time": "11:14",
+            "bondReturn": -0.913,
+            "stockReturn": -1.01
+          },
+          {
+            "time": "11:18",
+            "bondReturn": -0.522,
+            "stockReturn": -0.616
+          },
+          {
+            "time": "11:22",
+            "bondReturn": -0.542,
+            "stockReturn": -0.567
+          },
+          {
+            "time": "11:26",
+            "bondReturn": -0.555,
+            "stockReturn": -0.443
+          },
+          {
+            "time": "11:30",
+            "bondReturn": -0.81,
+            "stockReturn": -0.64
+          },
+          {
+            "time": "13:04",
+            "bondReturn": -1.208,
+            "stockReturn": -1.724
+          },
+          {
+            "time": "13:08",
+            "bondReturn": -0.702,
+            "stockReturn": -0.887
+          },
+          {
+            "time": "13:12",
+            "bondReturn": -2.346,
+            "stockReturn": -1.478
+          },
+          {
+            "time": "13:16",
+            "bondReturn": -3.651,
+            "stockReturn": -1.478
+          },
+          {
+            "time": "13:20",
+            "bondReturn": -3.802,
+            "stockReturn": -1.823
+          },
+          {
+            "time": "13:24",
+            "bondReturn": -2.71,
+            "stockReturn": -1.33
+          },
+          {
+            "time": "13:28",
+            "bondReturn": -2.909,
+            "stockReturn": -1.601
+          },
+          {
+            "time": "13:32",
+            "bondReturn": -2.777,
+            "stockReturn": -1.675
+          },
+          {
+            "time": "13:36",
+            "bondReturn": -2.794,
+            "stockReturn": -1.798
+          },
+          {
+            "time": "13:40",
+            "bondReturn": -2.482,
+            "stockReturn": -1.724
+          },
+          {
+            "time": "13:44",
+            "bondReturn": -2.3,
+            "stockReturn": -1.453
+          },
+          {
+            "time": "13:48",
+            "bondReturn": -2.409,
+            "stockReturn": -1.675
+          },
+          {
+            "time": "13:52",
+            "bondReturn": -2.612,
+            "stockReturn": -1.847
+          },
+          {
+            "time": "13:56",
+            "bondReturn": -2.538,
+            "stockReturn": -1.773
+          },
+          {
+            "time": "14:00",
+            "bondReturn": -2.344,
+            "stockReturn": -1.749
+          },
+          {
+            "time": "14:04",
+            "bondReturn": -2.93,
+            "stockReturn": -1.724
+          },
+          {
+            "time": "14:08",
+            "bondReturn": -2.379,
+            "stockReturn": -1.453
+          },
+          {
+            "time": "14:12",
+            "bondReturn": -1.51,
+            "stockReturn": -0.64
+          },
+          {
+            "time": "14:16",
+            "bondReturn": -1.861,
+            "stockReturn": -0.739
+          },
+          {
+            "time": "14:20",
+            "bondReturn": -1.33,
+            "stockReturn": -0.099
+          },
+          {
+            "time": "14:24",
+            "bondReturn": -0.625,
+            "stockReturn": 0.222
+          },
+          {
+            "time": "14:28",
+            "bondReturn": -0.451,
+            "stockReturn": 0.419
+          },
+          {
+            "time": "14:32",
+            "bondReturn": -0.661,
+            "stockReturn": -0.049
+          },
+          {
+            "time": "14:36",
+            "bondReturn": -0.602,
+            "stockReturn": 0.025
+          },
+          {
+            "time": "14:40",
+            "bondReturn": -0.495,
+            "stockReturn": 0.394
+          },
+          {
+            "time": "14:44",
+            "bondReturn": -0.107,
+            "stockReturn": 0.32
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 0.192,
+            "stockReturn": 0.616
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 0.963,
+            "stockReturn": 1.65
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 1.167,
+            "stockReturn": 1.724
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 0.862,
+            "stockReturn": 1.158
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -0.3,
+        "relativeStrength": "强弱接近",
+        "warning": null
+      }
+    },
+    {
+      "rank": 5,
+      "professionalScore": 77.69,
+      "volatilityScore": 5.31,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 93.88,
+        "bondRangePosition": 91.21,
+        "captureRatio": 0.3
+      },
+      "factors": {
+        "volatility": 83.47,
+        "activity": 58.99,
+        "trend": 93.63,
+        "linkage": 56.44,
+        "premiumQuality": 88.71,
+        "captureRatio": 0.3,
+        "returnPersistence": 76.54,
+        "meanReversion": 23.46,
+        "oscillation": 61.2,
+        "stockRangePosition": 93.88,
+        "bondRangePosition": 91.21,
+        "style": "向上联动",
+        "preliminaryScore": 74.99
+      },
+      "bond": {
+        "code": "127103",
+        "name": "东南转债",
+        "price": 139.483,
+        "previousClose": 136.457,
+        "open": 136.502,
+        "high": 139.831,
+        "low": 135.873,
+        "changePct": 2.22,
+        "amplitude": 2.9,
+        "intradayAmplitude": 2.9,
+        "amount": 92369646,
+        "turnoverRate": 3.36,
+        "volumeRatio": 1.18,
+        "conversionPrice": 5.59,
+        "conversionValue": 114.132,
+        "conversionPremiumRate": 22.21,
+        "pureBondValue": 106.054
+      },
+      "stock": {
+        "code": "002135",
+        "name": "东南网架",
+        "price": 6.38,
+        "previousClose": 5.94,
+        "open": 6.04,
+        "high": 6.41,
+        "low": 5.92,
+        "changePct": 7.41,
+        "amplitude": 8.25,
+        "intradayAmplitude": 8.25,
+        "amount": 113207716,
+        "turnoverRate": 1.76,
+        "volumeRatio": 1.72
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.9664,
+        "directionAgreement": 0.7322,
+        "syncRate": 90,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0.033,
+            "stockReturn": 1.684
+          },
+          {
+            "time": "09:34",
+            "bondReturn": 0.715,
+            "stockReturn": 1.852
+          },
+          {
+            "time": "09:38",
+            "bondReturn": 0.395,
+            "stockReturn": 1.347
+          },
+          {
+            "time": "09:42",
+            "bondReturn": 0.561,
+            "stockReturn": 1.515
+          },
+          {
+            "time": "09:46",
+            "bondReturn": 0.525,
+            "stockReturn": 1.01
+          },
+          {
+            "time": "09:50",
+            "bondReturn": 0.343,
+            "stockReturn": 1.01
+          },
+          {
+            "time": "09:54",
+            "bondReturn": 0.105,
+            "stockReturn": 0.505
+          },
+          {
+            "time": "09:58",
+            "bondReturn": -0.077,
+            "stockReturn": 0.505
+          },
+          {
+            "time": "10:02",
+            "bondReturn": -0.089,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "10:06",
+            "bondReturn": -0.034,
+            "stockReturn": 0.505
+          },
+          {
+            "time": "10:10",
+            "bondReturn": 0.123,
+            "stockReturn": 0.842
+          },
+          {
+            "time": "10:14",
+            "bondReturn": 0.405,
+            "stockReturn": 1.178
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 0.557,
+            "stockReturn": 1.515
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 0.69,
+            "stockReturn": 1.347
+          },
+          {
+            "time": "10:26",
+            "bondReturn": 0.56,
+            "stockReturn": 1.01
+          },
+          {
+            "time": "10:30",
+            "bondReturn": 0.263,
+            "stockReturn": 0.673
+          },
+          {
+            "time": "10:34",
+            "bondReturn": 0.176,
+            "stockReturn": 0.842
+          },
+          {
+            "time": "10:38",
+            "bondReturn": -0.027,
+            "stockReturn": 0.673
+          },
+          {
+            "time": "10:42",
+            "bondReturn": -0.086,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "10:46",
+            "bondReturn": -0.084,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "10:50",
+            "bondReturn": 0.023,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "10:54",
+            "bondReturn": -0.114,
+            "stockReturn": 0
+          },
+          {
+            "time": "10:58",
+            "bondReturn": -0.237,
+            "stockReturn": 0
+          },
+          {
+            "time": "11:02",
+            "bondReturn": -0.248,
+            "stockReturn": 0
+          },
+          {
+            "time": "11:06",
+            "bondReturn": -0.296,
+            "stockReturn": 0
+          },
+          {
+            "time": "11:10",
+            "bondReturn": 0.048,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 0.05,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "11:18",
+            "bondReturn": -0.116,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "11:22",
+            "bondReturn": -0.202,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "11:26",
+            "bondReturn": -0.207,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "11:30",
+            "bondReturn": -0.325,
+            "stockReturn": 0
+          },
+          {
+            "time": "13:04",
+            "bondReturn": -0.254,
+            "stockReturn": 0
+          },
+          {
+            "time": "13:08",
+            "bondReturn": -0.13,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 0.033,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "13:16",
+            "bondReturn": -0.007,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "13:20",
+            "bondReturn": -0.171,
+            "stockReturn": 0
+          },
+          {
+            "time": "13:24",
+            "bondReturn": -0.252,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "13:28",
+            "bondReturn": -0.292,
+            "stockReturn": -0.168
+          },
+          {
+            "time": "13:32",
+            "bondReturn": -0.34,
+            "stockReturn": 0
+          },
+          {
+            "time": "13:36",
+            "bondReturn": -0.335,
+            "stockReturn": 0
+          },
+          {
+            "time": "13:40",
+            "bondReturn": -0.087,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "13:44",
+            "bondReturn": -0.239,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "13:48",
+            "bondReturn": -0.135,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "13:52",
+            "bondReturn": -0.334,
+            "stockReturn": 0
+          },
+          {
+            "time": "13:56",
+            "bondReturn": -0.25,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "14:00",
+            "bondReturn": -0.169,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "14:04",
+            "bondReturn": -0.11,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "14:08",
+            "bondReturn": -0.084,
+            "stockReturn": 0
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 0.007,
+            "stockReturn": 0.337
+          },
+          {
+            "time": "14:16",
+            "bondReturn": -0.072,
+            "stockReturn": 0.168
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 0.1,
+            "stockReturn": 0.673
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 0.127,
+            "stockReturn": 0.842
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 0.276,
+            "stockReturn": 1.347
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 0.343,
+            "stockReturn": 1.852
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 0.852,
+            "stockReturn": 2.694
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 0.795,
+            "stockReturn": 2.862
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 0.975,
+            "stockReturn": 4.377
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 1.349,
+            "stockReturn": 4.714
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 1.83,
+            "stockReturn": 6.734
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 2.348,
+            "stockReturn": 7.407
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 2.218,
+            "stockReturn": 7.407
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -5.19,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    },
+    {
+      "rank": 6,
+      "professionalScore": 76.97,
+      "volatilityScore": 4.29,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 91.8,
+        "bondRangePosition": 75.21,
+        "captureRatio": 0.404
+      },
+      "factors": {
+        "volatility": 77.58,
+        "activity": 66.89,
+        "trend": 90.49,
+        "linkage": 64.12,
+        "premiumQuality": 83.55,
+        "captureRatio": 0.404,
+        "returnPersistence": 75.05,
+        "meanReversion": 24.95,
+        "oscillation": 63.53,
+        "stockRangePosition": 91.8,
+        "bondRangePosition": 75.21,
+        "style": "向上联动",
+        "preliminaryScore": 76.09
+      },
+      "bond": {
+        "code": "110099",
+        "name": "福能转债",
+        "price": 146.856,
+        "previousClose": 143.689,
+        "open": 143.688,
+        "high": 147.9,
+        "low": 143.688,
+        "changePct": 2.2,
+        "amplitude": 2.93,
+        "intradayAmplitude": 2.93,
+        "amount": 237581120,
+        "turnoverRate": 4.26,
+        "volumeRatio": 4.28,
+        "conversionPrice": 9.49,
+        "conversionValue": 114.12,
+        "conversionPremiumRate": 28.69,
+        "pureBondValue": 100.754
+      },
+      "stock": {
+        "code": "600483",
+        "name": "福能股份",
+        "price": 10.83,
+        "previousClose": 10.27,
+        "open": 10.37,
+        "high": 10.88,
+        "low": 10.33,
+        "changePct": 5.45,
+        "amplitude": 5.94,
+        "intradayAmplitude": 5.36,
+        "amount": 394517915,
+        "turnoverRate": 1.32,
+        "volumeRatio": 3.3
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.7309,
+        "directionAgreement": 1,
+        "syncRate": 81,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0,
+            "stockReturn": 0.974
+          },
+          {
+            "time": "09:34",
+            "bondReturn": 1.224,
+            "stockReturn": 3.019
+          },
+          {
+            "time": "09:38",
+            "bondReturn": 1.374,
+            "stockReturn": 3.408
+          },
+          {
+            "time": "09:42",
+            "bondReturn": 1.181,
+            "stockReturn": 2.921
+          },
+          {
+            "time": "09:46",
+            "bondReturn": 1.645,
+            "stockReturn": 3.895
+          },
+          {
+            "time": "09:50",
+            "bondReturn": 2.076,
+            "stockReturn": 4.576
+          },
+          {
+            "time": "09:54",
+            "bondReturn": 1.909,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "09:58",
+            "bondReturn": 2.656,
+            "stockReturn": 5.258
+          },
+          {
+            "time": "10:02",
+            "bondReturn": 2.618,
+            "stockReturn": 5.063
+          },
+          {
+            "time": "10:06",
+            "bondReturn": 2.473,
+            "stockReturn": 4.674
+          },
+          {
+            "time": "10:10",
+            "bondReturn": 2.331,
+            "stockReturn": 4.771
+          },
+          {
+            "time": "10:14",
+            "bondReturn": 2.304,
+            "stockReturn": 4.771
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 2.391,
+            "stockReturn": 5.063
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 2.346,
+            "stockReturn": 4.674
+          },
+          {
+            "time": "10:26",
+            "bondReturn": 2.368,
+            "stockReturn": 4.966
+          },
+          {
+            "time": "10:30",
+            "bondReturn": 2.443,
+            "stockReturn": 4.966
+          },
+          {
+            "time": "10:34",
+            "bondReturn": 2.336,
+            "stockReturn": 5.063
+          },
+          {
+            "time": "10:38",
+            "bondReturn": 2.309,
+            "stockReturn": 4.771
+          },
+          {
+            "time": "10:42",
+            "bondReturn": 2.343,
+            "stockReturn": 4.576
+          },
+          {
+            "time": "10:46",
+            "bondReturn": 2.48,
+            "stockReturn": 4.869
+          },
+          {
+            "time": "10:50",
+            "bondReturn": 2.428,
+            "stockReturn": 5.258
+          },
+          {
+            "time": "10:54",
+            "bondReturn": 2.37,
+            "stockReturn": 5.355
+          },
+          {
+            "time": "10:58",
+            "bondReturn": 2.523,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "11:02",
+            "bondReturn": 2.513,
+            "stockReturn": 5.648
+          },
+          {
+            "time": "11:06",
+            "bondReturn": 2.324,
+            "stockReturn": 5.355
+          },
+          {
+            "time": "11:10",
+            "bondReturn": 2.395,
+            "stockReturn": 5.258
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 2.354,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "11:18",
+            "bondReturn": 2.332,
+            "stockReturn": 5.745
+          },
+          {
+            "time": "11:22",
+            "bondReturn": 2.109,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "11:26",
+            "bondReturn": 2.129,
+            "stockReturn": 5.745
+          },
+          {
+            "time": "11:30",
+            "bondReturn": 2.116,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "13:04",
+            "bondReturn": 2.058,
+            "stockReturn": 5.648
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 1.966,
+            "stockReturn": 5.648
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 2.051,
+            "stockReturn": 5.648
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 2.09,
+            "stockReturn": 5.745
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 1.967,
+            "stockReturn": 5.55
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 1.795,
+            "stockReturn": 5.355
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 1.941,
+            "stockReturn": 5.258
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 2.112,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "13:36",
+            "bondReturn": 2.15,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 2.102,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 2.215,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 2.172,
+            "stockReturn": 5.063
+          },
+          {
+            "time": "13:52",
+            "bondReturn": 2.197,
+            "stockReturn": 4.966
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 2.263,
+            "stockReturn": 5.063
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 2.299,
+            "stockReturn": 5.063
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 2.304,
+            "stockReturn": 5.355
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 2.303,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 2.3,
+            "stockReturn": 4.966
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 2.304,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 2.304,
+            "stockReturn": 5.355
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 2.304,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 2.304,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 2.267,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 2.167,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 2.288,
+            "stockReturn": 5.258
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 2.242,
+            "stockReturn": 5.161
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 2.315,
+            "stockReturn": 5.355
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 2.433,
+            "stockReturn": 5.258
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 2.278,
+            "stockReturn": 5.453
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 2.204,
+            "stockReturn": 5.453
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -3.25,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    },
+    {
+      "rank": 7,
+      "professionalScore": 69.12,
+      "volatilityScore": 3.08,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 94.59,
+        "bondRangePosition": 80.92,
+        "captureRatio": 0.326
+      },
+      "factors": {
+        "volatility": 62.02,
+        "activity": 64.31,
+        "trend": 75.19,
+        "linkage": 57.46,
+        "premiumQuality": 75.48,
+        "captureRatio": 0.326,
+        "returnPersistence": 40.16,
+        "meanReversion": 59.84,
+        "oscillation": 62.93,
+        "stockRangePosition": 94.59,
+        "bondRangePosition": 80.92,
+        "style": "向上联动",
+        "preliminaryScore": 65.63
+      },
+      "bond": {
+        "code": "127088",
+        "name": "赫达转债",
+        "price": 174.887,
+        "previousClose": 173,
+        "open": 174.55,
+        "high": 175.783,
+        "low": 171.087,
+        "changePct": 1.09,
+        "amplitude": 2.71,
+        "intradayAmplitude": 2.71,
+        "amount": 63227639,
+        "turnoverRate": 6.07,
+        "volumeRatio": 1.11,
+        "conversionPrice": 16.61,
+        "conversionValue": 130.403,
+        "conversionPremiumRate": 34.11,
+        "pureBondValue": 111.512
+      },
+      "stock": {
+        "code": "002810",
+        "name": "山东赫达",
+        "price": 21.66,
+        "previousClose": 20.96,
+        "open": 21.1,
+        "high": 21.7,
+        "low": 21.02,
+        "changePct": 3.34,
+        "amplitude": 3.53,
+        "intradayAmplitude": 3.24,
+        "amount": 153486556,
+        "turnoverRate": 2.22,
+        "volumeRatio": 1.1
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.9392,
+        "directionAgreement": 0.6266,
+        "syncRate": 85,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0.896,
+            "stockReturn": 0.668
+          },
+          {
+            "time": "09:34",
+            "bondReturn": 0.342,
+            "stockReturn": 2.433
+          },
+          {
+            "time": "09:38",
+            "bondReturn": -0.013,
+            "stockReturn": 2.099
+          },
+          {
+            "time": "09:42",
+            "bondReturn": -0.018,
+            "stockReturn": 1.479
+          },
+          {
+            "time": "09:46",
+            "bondReturn": -0.209,
+            "stockReturn": 1.145
+          },
+          {
+            "time": "09:50",
+            "bondReturn": -0.438,
+            "stockReturn": 1.288
+          },
+          {
+            "time": "09:54",
+            "bondReturn": -0.721,
+            "stockReturn": 0.906
+          },
+          {
+            "time": "09:58",
+            "bondReturn": -1.027,
+            "stockReturn": 0.525
+          },
+          {
+            "time": "10:02",
+            "bondReturn": -0.724,
+            "stockReturn": 0.477
+          },
+          {
+            "time": "10:06",
+            "bondReturn": -0.809,
+            "stockReturn": 0.906
+          },
+          {
+            "time": "10:10",
+            "bondReturn": -0.261,
+            "stockReturn": 1.288
+          },
+          {
+            "time": "10:14",
+            "bondReturn": -0.575,
+            "stockReturn": 0.811
+          },
+          {
+            "time": "10:18",
+            "bondReturn": -0.131,
+            "stockReturn": 1.336
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 0.155,
+            "stockReturn": 1.813
+          },
+          {
+            "time": "10:26",
+            "bondReturn": -0.171,
+            "stockReturn": 1.574
+          },
+          {
+            "time": "10:30",
+            "bondReturn": -0.535,
+            "stockReturn": 1.145
+          },
+          {
+            "time": "10:34",
+            "bondReturn": -0.753,
+            "stockReturn": 1.05
+          },
+          {
+            "time": "10:38",
+            "bondReturn": -0.756,
+            "stockReturn": 0.763
+          },
+          {
+            "time": "10:42",
+            "bondReturn": -0.694,
+            "stockReturn": 0.429
+          },
+          {
+            "time": "10:46",
+            "bondReturn": -0.751,
+            "stockReturn": 0.668
+          },
+          {
+            "time": "10:50",
+            "bondReturn": -0.927,
+            "stockReturn": 0.811
+          },
+          {
+            "time": "10:54",
+            "bondReturn": -0.619,
+            "stockReturn": 0.716
+          },
+          {
+            "time": "10:58",
+            "bondReturn": -0.695,
+            "stockReturn": 0.525
+          },
+          {
+            "time": "11:02",
+            "bondReturn": -0.405,
+            "stockReturn": 0.525
+          },
+          {
+            "time": "11:06",
+            "bondReturn": -0.289,
+            "stockReturn": 0.668
+          },
+          {
+            "time": "11:10",
+            "bondReturn": -0.111,
+            "stockReturn": 1.288
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 0.094,
+            "stockReturn": 1.145
+          },
+          {
+            "time": "11:18",
+            "bondReturn": 0.173,
+            "stockReturn": 1.384
+          },
+          {
+            "time": "11:22",
+            "bondReturn": 0.192,
+            "stockReturn": 1.574
+          },
+          {
+            "time": "11:26",
+            "bondReturn": 0.093,
+            "stockReturn": 1.431
+          },
+          {
+            "time": "11:30",
+            "bondReturn": 0.105,
+            "stockReturn": 1.288
+          },
+          {
+            "time": "13:04",
+            "bondReturn": 0.858,
+            "stockReturn": 2.815
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 1.159,
+            "stockReturn": 3.34
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 0.547,
+            "stockReturn": 2.767
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 0.656,
+            "stockReturn": 2.719
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 0.65,
+            "stockReturn": 2.576
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 0.672,
+            "stockReturn": 2.719
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 0.681,
+            "stockReturn": 2.767
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 0.719,
+            "stockReturn": 2.91
+          },
+          {
+            "time": "13:36",
+            "bondReturn": 0.572,
+            "stockReturn": 2.624
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 0.998,
+            "stockReturn": 3.197
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 0.994,
+            "stockReturn": 3.101
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 0.982,
+            "stockReturn": 2.576
+          },
+          {
+            "time": "13:52",
+            "bondReturn": 0.783,
+            "stockReturn": 2.338
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 0.943,
+            "stockReturn": 2.529
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 1.008,
+            "stockReturn": 2.576
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 0.964,
+            "stockReturn": 2.672
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 1.251,
+            "stockReturn": 2.767
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 1.118,
+            "stockReturn": 2.719
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 1.214,
+            "stockReturn": 2.672
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 1.329,
+            "stockReturn": 3.006
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 1.563,
+            "stockReturn": 3.101
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 1.531,
+            "stockReturn": 3.244
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 1.048,
+            "stockReturn": 2.719
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 1.04,
+            "stockReturn": 2.815
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 0.907,
+            "stockReturn": 2.815
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 0.919,
+            "stockReturn": 2.767
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 1.06,
+            "stockReturn": 3.244
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 1.266,
+            "stockReturn": 3.197
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 1.095,
+            "stockReturn": 3.244
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 1.091,
+            "stockReturn": 3.34
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -2.25,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    },
+    {
+      "rank": 8,
+      "professionalScore": 68.86,
+      "volatilityScore": 2.62,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 71.43,
+        "bondRangePosition": 65.7,
+        "captureRatio": 0.989
+      },
+      "factors": {
+        "volatility": 51.77,
+        "activity": 66.14,
+        "trend": 60.19,
+        "linkage": 88.92,
+        "premiumQuality": 56.45,
+        "captureRatio": 0.989,
+        "returnPersistence": 65.83,
+        "meanReversion": 33.1,
+        "oscillation": 64.25,
+        "stockRangePosition": 71.43,
+        "bondRangePosition": 65.7,
+        "style": "向上联动",
+        "preliminaryScore": 65.32
+      },
+      "bond": {
+        "code": "110103",
+        "name": "申能转债",
+        "price": 145.938,
+        "previousClose": 143.391,
+        "open": 143.63,
+        "high": 147.268,
+        "low": 143.453,
+        "changePct": 1.78,
+        "amplitude": 2.7,
+        "intradayAmplitude": 2.66,
+        "amount": 280975441,
+        "turnoverRate": 9.63,
+        "volumeRatio": 0.97,
+        "conversionPrice": 8.74,
+        "conversionValue": 97.14,
+        "conversionPremiumRate": 50.24,
+        "pureBondValue": 99.323
+      },
+      "stock": {
+        "code": "600642",
+        "name": "申能股份",
+        "price": 8.49,
+        "previousClose": 8.34,
+        "open": 8.35,
+        "high": 8.55,
+        "low": 8.35,
+        "changePct": 1.8,
+        "amplitude": 2.52,
+        "intradayAmplitude": 2.4,
+        "amount": 237329965,
+        "turnoverRate": 0.57,
+        "volumeRatio": 1.33
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.7862,
+        "directionAgreement": 1,
+        "syncRate": 85,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0.167,
+            "stockReturn": 0.12
+          },
+          {
+            "time": "09:34",
+            "bondReturn": 0.285,
+            "stockReturn": 0.24
+          },
+          {
+            "time": "09:38",
+            "bondReturn": 0.634,
+            "stockReturn": 0.36
+          },
+          {
+            "time": "09:42",
+            "bondReturn": 0.977,
+            "stockReturn": 0.24
+          },
+          {
+            "time": "09:46",
+            "bondReturn": 1.192,
+            "stockReturn": 0.48
+          },
+          {
+            "time": "09:50",
+            "bondReturn": 1.542,
+            "stockReturn": 0.839
+          },
+          {
+            "time": "09:54",
+            "bondReturn": 1.746,
+            "stockReturn": 1.319
+          },
+          {
+            "time": "09:58",
+            "bondReturn": 1.959,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "10:02",
+            "bondReturn": 2.17,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "10:06",
+            "bondReturn": 1.561,
+            "stockReturn": 1.319
+          },
+          {
+            "time": "10:10",
+            "bondReturn": 1.578,
+            "stockReturn": 1.439
+          },
+          {
+            "time": "10:14",
+            "bondReturn": 1.331,
+            "stockReturn": 1.319
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 1.765,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 1.863,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "10:26",
+            "bondReturn": 1.491,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "10:30",
+            "bondReturn": 1.577,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "10:34",
+            "bondReturn": 1.453,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "10:38",
+            "bondReturn": 1.332,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "10:42",
+            "bondReturn": 1.635,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "10:46",
+            "bondReturn": 1.725,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "10:50",
+            "bondReturn": 1.715,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "10:54",
+            "bondReturn": 1.935,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "10:58",
+            "bondReturn": 1.891,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "11:02",
+            "bondReturn": 2.11,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "11:06",
+            "bondReturn": 2.049,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "11:10",
+            "bondReturn": 2.112,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 2.05,
+            "stockReturn": 2.278
+          },
+          {
+            "time": "11:18",
+            "bondReturn": 2.098,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "11:22",
+            "bondReturn": 2.066,
+            "stockReturn": 2.158
+          },
+          {
+            "time": "11:26",
+            "bondReturn": 2.239,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "11:30",
+            "bondReturn": 2.439,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "13:04",
+            "bondReturn": 2.052,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 1.795,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 1.755,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 1.918,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 1.733,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 1.77,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 1.841,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 1.885,
+            "stockReturn": 2.038
+          },
+          {
+            "time": "13:36",
+            "bondReturn": 2.145,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 2.161,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 1.838,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 1.933,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:52",
+            "bondReturn": 1.796,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 1.921,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 1.856,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 1.889,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 1.911,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 1.859,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 1.797,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 1.646,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 1.792,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 1.838,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 1.74,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 1.85,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 1.697,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 1.677,
+            "stockReturn": 1.918
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 1.515,
+            "stockReturn": 1.799
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 1.68,
+            "stockReturn": 1.679
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 1.773,
+            "stockReturn": 1.559
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 1.776,
+            "stockReturn": 1.799
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -0.02,
+        "relativeStrength": "强弱接近",
+        "warning": null
+      }
+    },
+    {
+      "rank": 9,
+      "professionalScore": 58.05,
+      "volatilityScore": 2.02,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 86.11,
+        "bondRangePosition": 72.47,
+        "captureRatio": 0.373
+      },
+      "factors": {
+        "volatility": 35.32,
+        "activity": 40.69,
+        "trend": 65.91,
+        "linkage": 64.58,
+        "premiumQuality": 84.19,
+        "captureRatio": 0.373,
+        "returnPersistence": 54.11,
+        "meanReversion": 45.89,
+        "oscillation": 40.17,
+        "stockRangePosition": 86.11,
+        "bondRangePosition": 72.47,
+        "style": "向上联动",
+        "preliminaryScore": 51.69
+      },
+      "bond": {
+        "code": "127056",
+        "name": "中特转债",
+        "price": 129.066,
+        "previousClose": 128.012,
+        "open": 128.169,
+        "high": 129.6,
+        "low": 127.66,
+        "changePct": 0.82,
+        "amplitude": 1.52,
+        "intradayAmplitude": 1.52,
+        "amount": 88150251,
+        "turnoverRate": 1.37,
+        "volumeRatio": 1.41,
+        "conversionPrice": 13.89,
+        "conversionValue": 100.36,
+        "conversionPremiumRate": 28.6,
+        "pureBondValue": 105.139
+      },
+      "stock": {
+        "code": "000708",
+        "name": "中信特钢",
+        "price": 13.94,
+        "previousClose": 13.64,
+        "open": 13.7,
+        "high": 13.99,
+        "low": 13.63,
+        "changePct": 2.2,
+        "amplitude": 2.64,
+        "intradayAmplitude": 2.64,
+        "amount": 253710408,
+        "turnoverRate": 0.36,
+        "volumeRatio": 1.29
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.8181,
+        "directionAgreement": 0.9959,
+        "syncRate": 87,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0,
+            "stockReturn": 0.44
+          },
+          {
+            "time": "09:34",
+            "bondReturn": 0.238,
+            "stockReturn": 0.806
+          },
+          {
+            "time": "09:38",
+            "bondReturn": 0.345,
+            "stockReturn": 1.393
+          },
+          {
+            "time": "09:42",
+            "bondReturn": 0.426,
+            "stockReturn": 1.173
+          },
+          {
+            "time": "09:46",
+            "bondReturn": 0.095,
+            "stockReturn": 1.246
+          },
+          {
+            "time": "09:50",
+            "bondReturn": 0.42,
+            "stockReturn": 1.466
+          },
+          {
+            "time": "09:54",
+            "bondReturn": 0.43,
+            "stockReturn": 2.126
+          },
+          {
+            "time": "09:58",
+            "bondReturn": 0.492,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "10:02",
+            "bondReturn": 0.592,
+            "stockReturn": 2.346
+          },
+          {
+            "time": "10:06",
+            "bondReturn": 0.466,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "10:10",
+            "bondReturn": 0.414,
+            "stockReturn": 2.126
+          },
+          {
+            "time": "10:14",
+            "bondReturn": 0.684,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 0.777,
+            "stockReturn": 2.126
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 0.77,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "10:26",
+            "bondReturn": 0.787,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "10:30",
+            "bondReturn": 0.796,
+            "stockReturn": 2.346
+          },
+          {
+            "time": "10:34",
+            "bondReturn": 0.662,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "10:38",
+            "bondReturn": 0.703,
+            "stockReturn": 1.979
+          },
+          {
+            "time": "10:42",
+            "bondReturn": 0.717,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "10:46",
+            "bondReturn": 0.625,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "10:50",
+            "bondReturn": 0.673,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "10:54",
+            "bondReturn": 0.744,
+            "stockReturn": 2.346
+          },
+          {
+            "time": "10:58",
+            "bondReturn": 0.702,
+            "stockReturn": 2.419
+          },
+          {
+            "time": "11:02",
+            "bondReturn": 0.742,
+            "stockReturn": 2.566
+          },
+          {
+            "time": "11:06",
+            "bondReturn": 0.747,
+            "stockReturn": 2.346
+          },
+          {
+            "time": "11:10",
+            "bondReturn": 1.119,
+            "stockReturn": 2.419
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 1.029,
+            "stockReturn": 2.419
+          },
+          {
+            "time": "11:18",
+            "bondReturn": 0.971,
+            "stockReturn": 2.419
+          },
+          {
+            "time": "11:22",
+            "bondReturn": 1.006,
+            "stockReturn": 2.493
+          },
+          {
+            "time": "11:26",
+            "bondReturn": 0.88,
+            "stockReturn": 2.493
+          },
+          {
+            "time": "11:30",
+            "bondReturn": 0.998,
+            "stockReturn": 2.493
+          },
+          {
+            "time": "13:04",
+            "bondReturn": 0.775,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 0.773,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 0.866,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 0.98,
+            "stockReturn": 2.346
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 0.842,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 0.866,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 0.815,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 0.805,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:36",
+            "bondReturn": 0.773,
+            "stockReturn": 2.346
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 0.767,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 0.735,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 0.753,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "13:52",
+            "bondReturn": 0.744,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 0.724,
+            "stockReturn": 1.979
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 0.686,
+            "stockReturn": 1.906
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 0.772,
+            "stockReturn": 2.126
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 0.775,
+            "stockReturn": 2.126
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 0.762,
+            "stockReturn": 1.979
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 0.759,
+            "stockReturn": 1.979
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 0.623,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 0.662,
+            "stockReturn": 1.76
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 0.645,
+            "stockReturn": 1.76
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 0.646,
+            "stockReturn": 1.833
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 0.717,
+            "stockReturn": 1.906
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 0.696,
+            "stockReturn": 1.833
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 0.813,
+            "stockReturn": 2.126
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 0.713,
+            "stockReturn": 1.979
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 0.805,
+            "stockReturn": 2.199
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 0.726,
+            "stockReturn": 2.273
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 0.823,
+            "stockReturn": 2.199
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -1.38,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    },
+    {
+      "rank": 10,
+      "professionalScore": 57.03,
+      "volatilityScore": 1.83,
+      "eligibility": {
+        "passed": true,
+        "stockVolatilityPass": true,
+        "upwardTrendPass": true,
+        "bondElasticityPass": true,
+        "failedReasons": [],
+        "stockRangePosition": 61.54,
+        "bondRangePosition": 67.35,
+        "captureRatio": 0.436
+      },
+      "factors": {
+        "volatility": 26.85,
+        "activity": 56.06,
+        "trend": 52.38,
+        "linkage": 74.43,
+        "premiumQuality": 98.71,
+        "captureRatio": 0.436,
+        "returnPersistence": 50.56,
+        "meanReversion": 49.44,
+        "oscillation": 43.45,
+        "stockRangePosition": 61.54,
+        "bondRangePosition": 67.35,
+        "style": "向上联动",
+        "preliminaryScore": 51.33
+      },
+      "bond": {
+        "code": "113042",
+        "name": "上银转债",
+        "price": 119.754,
+        "previousClose": 119.068,
+        "open": 119.199,
+        "high": 120.2,
+        "low": 118.834,
+        "changePct": 0.58,
+        "amplitude": 1.15,
+        "intradayAmplitude": 1.15,
+        "amount": 578366706,
+        "turnoverRate": 2.42,
+        "volumeRatio": 2.19,
+        "conversionPrice": 8.35,
+        "conversionValue": 118.204,
+        "conversionPremiumRate": 1.31,
+        "pureBondValue": 111.301
+      },
+      "stock": {
+        "code": "601229",
+        "name": "上海银行",
+        "price": 9.87,
+        "previousClose": 9.74,
+        "open": 9.73,
+        "high": 9.97,
+        "low": 9.71,
+        "changePct": 1.33,
+        "amplitude": 2.67,
+        "intradayAmplitude": 2.67,
+        "amount": 717622170,
+        "turnoverRate": 0.51,
+        "volumeRatio": 0.98
+      },
+      "sync": {
+        "syncMode": "minute-path",
+        "tradeDate": "2026-08-24",
+        "sampleCount": 241,
+        "pathCorrelation": 0.7873,
+        "directionAgreement": 0.9461,
+        "syncRate": 83,
+        "timeline": [
+          {
+            "time": "09:30",
+            "bondReturn": 0.11,
+            "stockReturn": -0.103
+          },
+          {
+            "time": "09:34",
+            "bondReturn": -0.061,
+            "stockReturn": 0.205
+          },
+          {
+            "time": "09:38",
+            "bondReturn": 0.075,
+            "stockReturn": 0.616
+          },
+          {
+            "time": "09:42",
+            "bondReturn": -0.057,
+            "stockReturn": 0.513
+          },
+          {
+            "time": "09:46",
+            "bondReturn": -0.141,
+            "stockReturn": 0.616
+          },
+          {
+            "time": "09:50",
+            "bondReturn": 0.18,
+            "stockReturn": 1.335
+          },
+          {
+            "time": "09:54",
+            "bondReturn": 0.237,
+            "stockReturn": 1.335
+          },
+          {
+            "time": "09:58",
+            "bondReturn": 0.298,
+            "stockReturn": 1.437
+          },
+          {
+            "time": "10:02",
+            "bondReturn": 0.359,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "10:06",
+            "bondReturn": 0.273,
+            "stockReturn": 1.437
+          },
+          {
+            "time": "10:10",
+            "bondReturn": 0.382,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "10:14",
+            "bondReturn": 0.447,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "10:18",
+            "bondReturn": 0.47,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "10:22",
+            "bondReturn": 0.477,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "10:26",
+            "bondReturn": 0.437,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "10:30",
+            "bondReturn": 0.645,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "10:34",
+            "bondReturn": 0.525,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "10:38",
+            "bondReturn": 0.559,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "10:42",
+            "bondReturn": 0.657,
+            "stockReturn": 1.848
+          },
+          {
+            "time": "10:46",
+            "bondReturn": 0.65,
+            "stockReturn": 1.848
+          },
+          {
+            "time": "10:50",
+            "bondReturn": 0.699,
+            "stockReturn": 1.951
+          },
+          {
+            "time": "10:54",
+            "bondReturn": 0.699,
+            "stockReturn": 1.848
+          },
+          {
+            "time": "10:58",
+            "bondReturn": 0.617,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "11:02",
+            "bondReturn": 0.657,
+            "stockReturn": 1.848
+          },
+          {
+            "time": "11:06",
+            "bondReturn": 0.6,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "11:10",
+            "bondReturn": 0.555,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "11:14",
+            "bondReturn": 0.695,
+            "stockReturn": 1.848
+          },
+          {
+            "time": "11:18",
+            "bondReturn": 0.65,
+            "stockReturn": 1.951
+          },
+          {
+            "time": "11:22",
+            "bondReturn": 0.651,
+            "stockReturn": 1.951
+          },
+          {
+            "time": "11:26",
+            "bondReturn": 0.745,
+            "stockReturn": 1.951
+          },
+          {
+            "time": "11:30",
+            "bondReturn": 0.767,
+            "stockReturn": 2.053
+          },
+          {
+            "time": "13:04",
+            "bondReturn": 0.783,
+            "stockReturn": 2.156
+          },
+          {
+            "time": "13:08",
+            "bondReturn": 0.669,
+            "stockReturn": 2.156
+          },
+          {
+            "time": "13:12",
+            "bondReturn": 0.748,
+            "stockReturn": 2.156
+          },
+          {
+            "time": "13:16",
+            "bondReturn": 0.861,
+            "stockReturn": 1.951
+          },
+          {
+            "time": "13:20",
+            "bondReturn": 0.788,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "13:24",
+            "bondReturn": 0.784,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "13:28",
+            "bondReturn": 0.782,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "13:32",
+            "bondReturn": 0.784,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "13:36",
+            "bondReturn": 0.787,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "13:40",
+            "bondReturn": 0.884,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "13:44",
+            "bondReturn": 0.857,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "13:48",
+            "bondReturn": 0.889,
+            "stockReturn": 1.745
+          },
+          {
+            "time": "13:52",
+            "bondReturn": 0.805,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "13:56",
+            "bondReturn": 0.779,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "14:00",
+            "bondReturn": 0.754,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:04",
+            "bondReturn": 0.748,
+            "stockReturn": 1.643
+          },
+          {
+            "time": "14:08",
+            "bondReturn": 0.738,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:12",
+            "bondReturn": 0.585,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:16",
+            "bondReturn": 0.581,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:20",
+            "bondReturn": 0.564,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:24",
+            "bondReturn": 0.568,
+            "stockReturn": 1.437
+          },
+          {
+            "time": "14:28",
+            "bondReturn": 0.561,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:32",
+            "bondReturn": 0.661,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:36",
+            "bondReturn": 0.62,
+            "stockReturn": 1.54
+          },
+          {
+            "time": "14:40",
+            "bondReturn": 0.613,
+            "stockReturn": 1.437
+          },
+          {
+            "time": "14:44",
+            "bondReturn": 0.609,
+            "stockReturn": 1.437
+          },
+          {
+            "time": "14:48",
+            "bondReturn": 0.579,
+            "stockReturn": 1.335
+          },
+          {
+            "time": "14:52",
+            "bondReturn": 0.663,
+            "stockReturn": 1.232
+          },
+          {
+            "time": "14:56",
+            "bondReturn": 0.585,
+            "stockReturn": 1.129
+          },
+          {
+            "time": "15:00",
+            "bondReturn": 0.576,
+            "stockReturn": 1.335
+          }
+        ],
+        "label": "高度同步",
+        "divergencePct": -0.75,
+        "relativeStrength": "正股偏强",
+        "warning": null
+      }
+    }
+  ]
+}
