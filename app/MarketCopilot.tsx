@@ -2802,13 +2802,22 @@ export default function MarketCopilot() {
             ) : (
               <>
                 <div className="source-guidance">
-                  当前默认接入项目自带的东方财富免费公开行情桥，不需要 API Key。最新价、分钟K线、日K、指数和股票行业板块来自公开接口；ETF跟踪指数无法可靠识别时会明确降级。网页仍未验证其交易所授权实时等级，如有持牌Level-1接口可在此替换。
+                  当前默认接入项目自带的东方财富免费公开行情桥，不需要 API Key。普通桌面或手机端 L2 会员不等于 API
+                  权限；只有服务商明确授权的 API、SDK 或行情网关才可以接入。完整 B/S 模型建议通过本地适配器返回分钟
+                  K、日 K、指数/板块序列和校验结果，付费密钥不要写入前端或 GitHub。
                   <a
-                    href="https://www.sseinfo.com/services/assortment/level1/"
+                    href="https://github.com/MitziTung-CIINC/intraday-compass/blob/main/docs/l2-market-data-integration.md"
                     target="_blank"
                     rel="noreferrer"
                   >
-                    查看上证所Level-1说明
+                    查看 L2 接入教程
+                  </a>
+                  <a
+                    href="https://www.sseinfo.com/services/assortment/level2/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    查看上证所 Level-2 说明
                   </a>
                 </div>
                 <div className="config-form">
@@ -2817,7 +2826,7 @@ export default function MarketCopilot() {
                   <input
                     type="text"
                     value={config.providerName}
-                    placeholder="例如：持牌Level-1行情服务商"
+                    placeholder="例如：我的持牌 L2 行情适配器"
                     onChange={(event) =>
                       setConfig((current) => ({
                         ...current,

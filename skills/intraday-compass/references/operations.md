@@ -80,6 +80,16 @@ The default REST mapping accepts this shape:
 
 Require CORS for browser REST feeds. For WebSocket feeds, verify subscription syntax, symbol substitution, reconnect behavior, and stale-data freezing before relying on the display.
 
+## Licensed L2 feeds
+
+Retail desktop or mobile Level-2 membership is not evidence of API entitlement. Connect only an official API, SDK, or gateway whose agreement permits the intended display or non-display use. Do not scrape, hook, decrypt, or reuse client credentials.
+
+Use direct browser REST/WebSocket configuration only for CORS-enabled Bearer-token feeds with compatible fields. Direct REST polling has a one-second minimum, and a scalar-only feed can update the displayed price but cannot enable the complete model without `minuteBars`, `dailyBars`, context series, and `meta.validation`.
+
+For Eastmoney Choice, Tonghuashun data interfaces, or broker-specific signed/SDK feeds, prefer a local adapter bound to `127.0.0.1`. Keep provider credentials in the adapter environment, normalize the provider payload into the custom feed contract above, restrict CORS to `http://localhost:4173`, and fail closed when validation cannot be proven. Never commit tokens or paid market data.
+
+The user-facing end-to-end guide is [`docs/l2-market-data-integration.md`](../../../docs/l2-market-data-integration.md).
+
 ## Persistence
 
 - Holdings and feed configuration use browser `localStorage` keys `t0-holdings`, `t0-feed-config-v3`, and `t0-wave-guide`.

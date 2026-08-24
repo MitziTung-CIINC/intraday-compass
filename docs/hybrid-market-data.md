@@ -35,3 +35,5 @@ ETF 使用自身公开快照、分钟线、日 K 和对应市场指数。公开�
 - `latestPriceProvider` 与 `minuteProvider` 均存在。
 
 再访问 `http://localhost:8765/quote?symbol=600519&market=SH`，确认 `meta.validation.passed` 为 `true`。示例代码只用于连通性检查，不会自动成为真实持仓。
+
+如需改用东方财富、同花顺或券商提供的正式 L2 API/SDK，请阅读[持牌 L2 行情接入教程](l2-market-data-integration.md)。普通客户端 L2 会员不自动包含 API 权限；完整模型应通过本地适配器统一最新价、分钟 K、日 K、指数/板块序列和校验结果。
