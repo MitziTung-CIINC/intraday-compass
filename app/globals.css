@@ -1040,6 +1040,82 @@ textarea:focus {
   width: min(920px, 100%);
 }
 
+.stopwatch-config-section {
+  border-top: 1px solid var(--soft-line);
+  padding: 20px 22px;
+}
+
+.stopwatch-config-heading,
+.stopwatch-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stopwatch-config-heading h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.stopwatch-status {
+  border-radius: 999px;
+  background: #edf0f3;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stopwatch-status.connected {
+  background: #e7f7ef;
+  color: #137548;
+}
+
+.stopwatch-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.stopwatch-fields label,
+.stopwatch-fields span,
+.stopwatch-fields small {
+  display: block;
+}
+
+.stopwatch-fields span {
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stopwatch-fields input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 9px 10px;
+  color: var(--ink);
+}
+
+.stopwatch-fields small,
+.stopwatch-actions p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.stopwatch-actions {
+  margin-top: 14px;
+}
+
+.stopwatch-actions p {
+  margin: 0;
+  text-align: right;
+}
+
 .holding-manager-layout {
   display: grid;
   grid-template-columns: minmax(240px, 0.8fr) minmax(320px, 1.2fr);
@@ -1881,6 +1957,20 @@ textarea:focus {
 }
 
 @media (max-width: 760px) {
+  .stopwatch-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .stopwatch-config-heading,
+  .stopwatch-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stopwatch-actions p {
+    text-align: left;
+  }
+
   .agent-topbar {
     align-items: flex-start;
     flex-wrap: wrap;

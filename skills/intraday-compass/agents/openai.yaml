@@ -1,4 +1,4 @@
 interface:
   display_name: "分时罗盘"
   short_description: "安装、运行、验证并维护 A股与场内ETF分时罗盘工具"
-  default_prompt: "Use $intraday-compass to install or run the intraday compass and safely configure real A-share or ETF tracking."
+  default_prompt: "Use $intraday-compass to install or run the intraday compass with its free public quote bridge and safely configure A-share or ETF tracking."

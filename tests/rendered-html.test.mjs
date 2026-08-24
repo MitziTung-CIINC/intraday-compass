@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 async function render(pathname = "/") {
@@ -32,20 +33,33 @@ test("server-renders the market copilot shell", async () => {
   assert.match(html, /只读行情实验台/);
   assert.match(html, /不连接证券账户/);
   assert.match(html, /行情配置/);
-  assert.match(html, /腾讯财经公开行情（本机只读桥）/);
+  assert.match(html, /东方财富官方行情桥/);
   assert.match(html, /管理持仓/);
   assert.match(html, /示例：贵州茅台/);
   assert.match(html, /真实持仓与做T账本/);
   assert.match(html, /记录真实买入/);
   assert.match(html, /降低成本成功率/);
   assert.match(html, /交易日历依据/);
-  assert.match(html, /MACD柱 \(12,26,9\)/);
-  assert.match(html, /视频规则模式/);
+  assert.match(html, /MACD辅助 \(12,26,9\)/);
+  assert.match(html, /课程规则模式/);
   assert.match(html, /消息面风险锁定/);
-  assert.match(html, /单次上限/);
+  assert.match(html, /建议批次/);
+  assert.match(html, /硬门槛/);
+  assert.match(html, /申万一级行业分钟序列/);
   assert.match(html, /大盘波浪 · 个股空仓指引/);
   assert.match(html, /成功率Agent/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("includes the StopWatch hardware sync controls", async () => {
+  const source = await readFile(
+    new URL("../app/MarketCopilot.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /StopWatch 硬件同步/);
+  assert.match(source, /同步持仓、实时 K 线与 B\/S 成熟提醒/);
+  assert.match(source, /testStopWatchConnection/);
+  assert.match(source, /readStopWatchSelection/);
 });
 
 test("server-renders the no-lookahead backtest agent", async () => {
@@ -62,5 +76,22 @@ test("server-renders the no-lookahead backtest agent", async () => {
   assert.match(html, /先信号，下一条行情成交/);
   assert.match(html, /大盘波浪过滤/);
   assert.match(html, /indexLevel/);
+  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
+});
+
+test("server-renders the convertible-bond synchronization radar", async () => {
+  const response = await render("/bond-radar");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+
+  const html = await response.text();
+  assert.match(html, /<title>转债同步雷达｜向上联动 Top 10<\/title>/i);
+  assert.match(html, /捕捉波动，也看清谁在跟随/);
+  assert.match(html, /向上联动 Top 10/);
+  assert.match(html, /分钟同步率/);
+  assert.match(html, /前一交易日收盘价/);
+  assert.match(html, /纯模型入选/);
+  assert.doesNotMatch(html, /人工先验|模型外补位/);
+  assert.match(html, /只读 · 不连接证券账户/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });

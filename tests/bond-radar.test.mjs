@@ -1,0 +1,76 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  calculateSync,
+  calculateVolatilityScore,
+  effectiveMovement,
+  effectiveRangePosition,
+  evaluateTrendEligibility,
+  pearsonCorrelation,
+} from "../tools/update-bond-radar.mjs";
+
+test("minute paths report perfect positive and negative correlations", () => {
+  assert.equal(pearsonCorrelation([1, 2, 3], [2, 4, 6]), 1);
+  assert.equal(pearsonCorrelation([1, 2, 3], [6, 4, 2]), -1);
+});
+
+test("sync score rewards positive path correlation and direction agreement", () => {
+  assert.equal(calculateSync(1, 1), 100);
+  assert.equal(calculateSync(-1, 0), 0);
+  assert.equal(calculateSync(0.5, 0.5), 50);
+});
+
+test("volatility score uses the documented 55/45 weighting", () => {
+  assert.equal(calculateVolatilityScore(10, 4), 7.3);
+});
+
+test("effective movement includes an overnight gap from previous close", () => {
+  assert.equal(effectiveMovement(110, 105, 100), 10);
+  assert.equal(effectiveMovement(99, 92, 100), 8);
+});
+
+test("effective range position uses previous close as part of the tradable range", () => {
+  assert.equal(effectiveRangePosition(109, 110, 103, 100), 90);
+  assert.equal(effectiveRangePosition(92, 99, 90, 100), 20);
+});
+
+test("trend gate treats all pairs equally and rejects non-upward linkage", () => {
+  const pair = {
+    bondAmplitude: 8,
+    stockAmplitude: 10,
+    bond: {
+      price: 106,
+      previousClose: 100,
+      open: 101,
+      high: 108,
+      low: 100,
+      changePct: 6,
+    },
+    stock: {
+      price: 109,
+      previousClose: 100,
+      open: 102,
+      high: 110,
+      low: 100,
+      changePct: 9,
+    },
+  };
+  assert.equal(evaluateTrendEligibility(pair).passed, true);
+
+  const fallingStock = {
+    ...pair,
+    stock: {
+      ...pair.stock,
+      price: 98.7,
+      open: 100,
+      high: 101,
+      low: 97.8,
+      changePct: -1.3,
+    },
+    stockAmplitude: 3.2,
+  };
+  const result = evaluateTrendEligibility(fallingStock);
+  assert.equal(result.passed, false);
+  assert.ok(result.failedReasons.includes("转债与正股未形成日内向上结构"));
+});

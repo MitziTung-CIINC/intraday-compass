@@ -35,6 +35,7 @@ __pycache__/
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -46,3 +47,13 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# local/private application data
+/data/
+/public/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# local Codex staging artifacts
+.codex-*.patch

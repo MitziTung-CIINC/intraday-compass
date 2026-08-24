@@ -4,12 +4,24 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   evaluateSignal,
+  recommendTrancheQuantity,
   T_MODE_META,
+  VOLUME_PHASE_LABEL,
   type CyclePhase,
+  type DailyBar,
+  type ModelContext,
   type SignalReading,
   type SignalState,
   type Tick,
 } from "./t0Model";
+import {
+  buildStopWatchState,
+  DEFAULT_STOPWATCH_CONFIG,
+  pushStopWatchState,
+  readStopWatchSelection,
+  testStopWatchConnection,
+  type StopWatchConfig,
+} from "./stopwatchSync";
 
 type FeedMode = "demo" | "rest" | "websocket";
 type ConnectionState = "connected" | "connecting" | "paused" | "error";
@@ -101,6 +113,29 @@ type MarketStatus = {
   kind: "unknown" | "closed" | "auction" | "break" | "continuous";
 };
 
+type MarketDataContext = {
+  instrumentKind: "stock" | "etf" | "bond";
+  indexName?: string;
+  indexCode?: string;
+  indexSource?: string;
+  indexSourceTime?: string;
+  indexSeriesValid: boolean;
+  sectorName?: string;
+  sectorCode?: string;
+  sectorSource?: string;
+  sectorSourceTime?: string;
+  sectorSeriesValid: boolean;
+  dailySeriesValid: boolean;
+  error?: string | null;
+};
+
+const EMPTY_MARKET_CONTEXT: MarketDataContext = {
+  instrumentKind: "stock",
+  indexSeriesValid: false,
+  sectorSeriesValid: false,
+  dailySeriesValid: false,
+};
+
 const DEFAULT_HOLDINGS: Holding[] = [
   {
     code: "600519",
@@ -128,8 +163,8 @@ const EMPTY_HOLDING_DRAFT: HoldingDraft = {
 
 const DEFAULT_CONFIG: FeedConfig = {
   mode: "rest",
-  providerName: "腾讯财经公开行情（本机只读桥）",
-  delayType: "unknown",
+  providerName: "东方财富官方行情桥",
+  delayType: "realtime",
   maxAgeSeconds: 15,
   url: "http://localhost:8765/quote?symbol={symbol}&market={market}",
   interval: 1000,
@@ -200,12 +235,12 @@ const SIGNAL_META: Record<
   watchB: {
     label: "B点观察",
     tone: "amber",
-    short: "跌速放缓，等待反转确认",
+    short: "5分钟下跌波段缩量，等待确认",
   },
   confirmB: {
     label: "B点确认",
     tone: "buy",
-    short: "反转条件成立，仅供模拟计划",
+    short: "B点条件成立，仅作人工真实操作参考",
   },
   tracking: {
     label: "持仓跟踪",
@@ -215,12 +250,12 @@ const SIGNAL_META: Record<
   watchS: {
     label: "S点观察",
     tone: "amber",
-    short: "上行动能减弱，等待破位",
+    short: "5分钟上涨波段缩量，等待确认",
   },
   confirmS: {
     label: "S点确认",
     tone: "sell",
-    short: "上行结构转弱，仅供模拟计划",
+    short: "S点条件成立，仅作人工真实操作参考",
   },
 };
 
@@ -635,7 +670,7 @@ function evaluateEmptyGuide(
       action: defensiveConfirmed
         ? cyclePhase === "neutral"
           ? "进入空仓观察状态，暂停新开正T"
-          : "优先结束未闭合的模拟T周期，再进入空仓观察"
+          : "优先结束未闭合的真实T周期，再进入空仓观察"
         : "不因指数单点跌破直接清仓",
       confirmations: [`指数跌破A浪低点 ${config.aLow}`, ...confirmations],
       missing: [
@@ -653,7 +688,7 @@ function evaluateEmptyGuide(
       tone: failureConfirmed ? "defensive" : "watch",
       title: failureConfirmed ? "B浪冲高失败空仓观察" : "进入B浪压力观察区",
       action: failureConfirmed
-        ? "若个股确认S点，可把模拟仓位降至空仓观察"
+        ? "若个股确认S点，可把计划仓位降至空仓观察"
         : "等待个股上沿转弱，不预判清仓",
       confirmations: [`指数接近B浪高点 ${config.bHigh}`, ...confirmations],
       missing: [
@@ -828,6 +863,9 @@ export default function MarketCopilot() {
   const [holdings, setHoldings] = useState<Holding[]>(DEFAULT_HOLDINGS);
   const [selectedCode, setSelectedCode] = useState(DEFAULT_HOLDINGS[0].code);
   const [ticks, setTicks] = useState<Tick[]>([]);
+  const [dailyBars, setDailyBars] = useState<DailyBar[]>([]);
+  const [marketDataContext, setMarketDataContext] =
+    useState<MarketDataContext>(EMPTY_MARKET_CONTEXT);
   const [signalState, setSignalState] = useState<SignalState>("blocked");
   const [cyclePhase, setCyclePhase] = useState<CyclePhase>("neutral");
   const [cycleQuantity, setCycleQuantity] = useState(0);
@@ -839,6 +877,11 @@ export default function MarketCopilot() {
   const [waveGuide, setWaveGuide] =
     useState<WaveGuideConfig>(DEFAULT_WAVE_GUIDE);
   const [token, setToken] = useState("");
+  const [stopWatchConfig, setStopWatchConfig] = useState<StopWatchConfig>(
+    DEFAULT_STOPWATCH_CONFIG,
+  );
+  const [stopWatchApiKey, setStopWatchApiKey] = useState("");
+  const [stopWatchStatus, setStopWatchStatus] = useState("尚未连接");
   const [configOpen, setConfigOpen] = useState(false);
   const [holdingsOpen, setHoldingsOpen] = useState(false);
   const [holdingDraft, setHoldingDraft] =
@@ -852,9 +895,7 @@ export default function MarketCopilot() {
   const [trades, setTrades] = useState<ActualTrade[]>([]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [eventRiskLocked, setEventRiskLocked] = useState(false);
-  const [feedMessage, setFeedMessage] = useState(
-    "正在连接腾讯财经公开行情",
-  );
+  const [feedMessage, setFeedMessage] = useState("正在连接东方财富官方行情桥");
   const [executionPrice, setExecutionPrice] = useState(
     DEFAULT_HOLDINGS[0].price,
   );
@@ -862,6 +903,11 @@ export default function MarketCopilot() {
   const [clockNow, setClockNow] = useState(0);
   const [lastReceivedAt, setLastReceivedAt] = useState<number | null>(null);
   const [lastSourceTime, setLastSourceTime] = useState<string | null>(null);
+  const [dataValidation, setDataValidation] = useState<{
+    passed: boolean;
+    status: string;
+    reason: string;
+  } | null>(null);
   const signalRef = useRef<SignalState>("blocked");
   const cyclePhaseRef = useRef<CyclePhase>("neutral");
   const cycleQuantityRef = useRef(0);
@@ -871,7 +917,10 @@ export default function MarketCopilot() {
   const selected =
     holdings.find((holding) => holding.code === selectedCode) ?? holdings[0];
   const latestTick = ticks.at(-1);
-  const currentPrice = latestTick?.price ?? selected.price;
+  const currentPrice =
+    config.mode === "demo"
+      ? latestTick?.price ?? selected.price
+      : selected.price;
   const change =
     selected.previousClose > 0
       ? ((currentPrice / selected.previousClose - 1) * 100) || 0
@@ -890,16 +939,52 @@ export default function MarketCopilot() {
       : !paused &&
         marketStatus.allowSignals &&
         connection === "connected" &&
-        !stale);
+        !stale &&
+        dataValidation?.passed === true);
+  const modelContext = useMemo<ModelContext>(
+    () => ({
+      dataValid: config.mode === "demo" || dataValidation?.passed === true,
+      indexSeriesValid:
+        config.mode === "demo" || marketDataContext.indexSeriesValid,
+      sectorSeriesValid:
+        config.mode === "demo" || marketDataContext.sectorSeriesValid,
+      dailySeriesValid:
+        config.mode === "demo" || marketDataContext.dailySeriesValid,
+      holdingShares: selected.shares,
+      sellableShares: selected.sellable,
+      turnaround: selected.turnaround,
+      instrumentKind: marketDataContext.instrumentKind,
+      dailyBars: config.mode === "demo" ? undefined : dailyBars,
+      now: config.mode === "demo" ? undefined : clockNow,
+      estimatedRoundTripCostPct: 0.08,
+      expectedSlippagePct: 0.06,
+    }),
+    [
+      clockNow,
+      config.mode,
+      dailyBars,
+      dataValidation?.passed,
+      marketDataContext,
+      selected.sellable,
+      selected.shares,
+      selected.turnaround,
+    ],
+  );
   const baseSignal = useMemo(
-    () => evaluateSignal(ticks, signalState, cyclePhase),
-    [cyclePhase, signalState, ticks],
+    () => evaluateSignal(ticks, signalState, cyclePhase, modelContext),
+    [cyclePhase, modelContext, signalState, ticks],
   );
   const blockedReason =
     eventRiskLocked
       ? "消息面风险锁定已开启"
       : config.mode === "demo"
         ? "历史演练未启动，样例曲线保持静止"
+        : !marketStatus.allowSignals
+          ? `${marketStatus.label}：${marketStatus.detail}`
+        : dataValidation === null
+          ? "等待东方财富官方最新价、分钟K线和市场上下文校验"
+        : !dataValidation.passed
+          ? `官方行情校验未通过：${dataValidation.reason}`
         : paused
         ? "监测已手动暂停"
         : stale
@@ -935,7 +1020,10 @@ export default function MarketCopilot() {
 
   const notify = useCallback(
     (state: SignalState, holding: Holding) => {
-      if (!notificationsEnabled || !["confirmB", "confirmS"].includes(state))
+      if (
+        !notificationsEnabled ||
+        !["watchB", "watchS", "confirmB", "confirmS"].includes(state)
+      )
         return;
       const meta = SIGNAL_META[state];
       if ("Notification" in window && Notification.permission === "granted") {
@@ -944,7 +1032,13 @@ export default function MarketCopilot() {
         });
       }
       if ("vibrate" in navigator) {
-        navigator.vibrate(state === "confirmB" ? [100, 80, 100] : [380]);
+        navigator.vibrate(
+          state === "watchB" || state === "watchS"
+            ? [80]
+            : state === "confirmB"
+              ? [100, 80, 100]
+              : [380],
+        );
       }
     },
     [notificationsEnabled],
@@ -965,6 +1059,10 @@ export default function MarketCopilot() {
       const savedConfig = window.localStorage.getItem("t0-feed-config-v3");
       const savedWaveGuide = window.localStorage.getItem("t0-wave-guide");
       const savedToken = window.sessionStorage.getItem("t0-session-token");
+      const savedStopWatch = window.localStorage.getItem("t0-stopwatch-config");
+      const savedStopWatchApiKey = window.sessionStorage.getItem(
+        "t0-stopwatch-api-key",
+      );
       try {
         if (savedHoldings) {
           const parsed = JSON.parse(savedHoldings) as Holding[];
@@ -977,18 +1075,36 @@ export default function MarketCopilot() {
         } else {
           setHoldingsOpen(true);
         }
-        if (savedConfig)
-          setConfig({ ...DEFAULT_CONFIG, ...JSON.parse(savedConfig) });
+        if (savedConfig) {
+          const parsed = JSON.parse(savedConfig) as Partial<FeedConfig>;
+          const isBundledBridge =
+            parsed.url === DEFAULT_CONFIG.url &&
+            ["腾讯", "Tushare", "东方财富官方"].some((name) =>
+              parsed.providerName?.includes(name),
+            );
+          setConfig(
+            isBundledBridge
+              ? DEFAULT_CONFIG
+              : { ...DEFAULT_CONFIG, ...parsed },
+          );
+        }
         if (savedWaveGuide)
           setWaveGuide({
             ...DEFAULT_WAVE_GUIDE,
             ...JSON.parse(savedWaveGuide),
           });
+        if (savedStopWatch) {
+          setStopWatchConfig({
+            ...DEFAULT_STOPWATCH_CONFIG,
+            ...JSON.parse(savedStopWatch),
+          });
+        }
       } catch {
         setHoldingsOpen(true);
         setFeedMessage("本机旧配置无法读取，请重新设置持仓");
       }
       if (savedToken) setToken(savedToken);
+      if (savedStopWatchApiKey) setStopWatchApiKey(savedStopWatchApiKey);
       setStorageReady(true);
     }, 0);
     return () => window.clearTimeout(timer);
@@ -1009,6 +1125,18 @@ export default function MarketCopilot() {
     if (!storageReady) return;
     window.localStorage.setItem("t0-wave-guide", JSON.stringify(waveGuide));
   }, [storageReady, waveGuide]);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    window.localStorage.setItem(
+      "t0-stopwatch-config",
+      JSON.stringify(stopWatchConfig),
+    );
+    window.sessionStorage.setItem(
+      "t0-stopwatch-api-key",
+      stopWatchApiKey,
+    );
+  }, [storageReady, stopWatchApiKey, stopWatchConfig]);
 
   useEffect(() => {
     let active = true;
@@ -1043,13 +1171,14 @@ export default function MarketCopilot() {
       ticks,
       signalRef.current,
       cyclePhaseRef.current,
+      modelContext,
     );
     if (reading.state !== signalRef.current) {
       signalRef.current = reading.state;
       setSignalState(reading.state);
       notify(reading.state, selected);
     }
-  }, [monitoringActive, notify, selected, ticks]);
+  }, [modelContext, monitoringActive, notify, selected, ticks]);
 
   const appendTick = useCallback((tick: Tick) => {
     setTicks((current) => {
@@ -1065,6 +1194,14 @@ export default function MarketCopilot() {
     (next: Holding) => {
       setSelectedCode(next.code);
       setTicks(config.mode === "demo" ? makeInitialTicks(next) : []);
+      setDailyBars([]);
+      setMarketDataContext({
+        ...EMPTY_MARKET_CONTEXT,
+        instrumentKind: /^(15|16|18|50|51|52|56|58)/.test(next.code)
+          ? "etf"
+          : "stock",
+      });
+      setDataValidation(null);
       setPaperQuantity(oneThirdQuantity(next.sellable) || 100);
       setExecutionPrice(next.price);
       tickIndexRef.current = 64;
@@ -1077,6 +1214,7 @@ export default function MarketCopilot() {
       setEventRiskLocked(false);
       setLastReceivedAt(null);
       setLastSourceTime(null);
+      setDataValidation(null);
       realFeedStartedRef.current = false;
       setConnection(config.mode === "demo" ? "paused" : "connecting");
     },
@@ -1091,6 +1229,90 @@ export default function MarketCopilot() {
     },
     [activateHolding, holdings],
   );
+
+  const stopWatchPayload = useMemo(
+    () =>
+      buildStopWatchState({
+        holdings,
+        selectedCode: selected.code,
+        ticks,
+        signal,
+        realtime: monitoringActive && !stale,
+      }),
+    [holdings, monitoringActive, selected.code, signal, stale, ticks],
+  );
+
+  useEffect(() => {
+    if (
+      !storageReady ||
+      !stopWatchConfig.enabled ||
+      !stopWatchApiKey ||
+      stopWatchPayload.holdings.length === 0
+    ) {
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setStopWatchStatus("正在同步");
+      void pushStopWatchState(
+        stopWatchConfig,
+        stopWatchApiKey,
+        stopWatchPayload,
+      )
+        .then(() => {
+          if (!cancelled) setStopWatchStatus("已同步实时行情");
+        })
+        .catch((error: unknown) => {
+          if (!cancelled) {
+            setStopWatchStatus(
+              error instanceof Error ? error.message : "同步失败",
+            );
+          }
+        });
+    }, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [
+    stopWatchApiKey,
+    stopWatchConfig,
+    stopWatchPayload,
+    storageReady,
+  ]);
+
+  useEffect(() => {
+    if (!stopWatchConfig.enabled || !stopWatchApiKey) return;
+    let cancelled = false;
+    const pollSelection = async () => {
+      try {
+        const deviceSelection = await readStopWatchSelection(
+          stopWatchConfig,
+          stopWatchApiKey,
+        );
+        if (
+          !cancelled &&
+          deviceSelection.selected_code &&
+          deviceSelection.selected_code !== selected.code
+        ) {
+          selectHolding(deviceSelection.selected_code);
+        }
+      } catch {
+        // State pushing owns the visible connection error; selection polling is best effort.
+      }
+    };
+    void pollSelection();
+    const timer = window.setInterval(pollSelection, 1800);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [
+    selectHolding,
+    selected.code,
+    stopWatchApiKey,
+    stopWatchConfig,
+  ]);
 
   useEffect(() => {
     if (config.mode === "demo") {
@@ -1178,6 +1400,9 @@ export default function MarketCopilot() {
           const fetchLatencyMs = Number(
             readPath(payload, "meta.fetchLatencyMs"),
           );
+          const validation = readPath(payload, "meta.validation") as
+            | { passed?: boolean; status?: string; reason?: string }
+            | undefined;
           const previousClose = Number(
             readPath(payload, config.previousClosePath),
           );
@@ -1186,16 +1411,102 @@ export default function MarketCopilot() {
             readPath(payload, config.timePath),
             receivedAt,
           );
-          appendTick({
-            price,
-            volume: Number(readPath(payload, config.volumePath)) || 1,
-            time: sourceTimestamp.minute,
-            sectorChange: Number(readPath(payload, config.sectorPath)) || 0,
-            indexChange: Number(readPath(payload, config.indexPath)) || 0,
-            indexLevel:
-              Number(readPath(payload, config.indexLevelPath)) || undefined,
-          });
+          const minuteBars = readPath(payload, "data.minuteBars");
+          const payloadDailyBars = readPath(payload, "data.dailyBars");
+          const payloadContext = readPath(payload, "data.context") as
+            | Partial<MarketDataContext>
+            | undefined;
+          if (active && Array.isArray(minuteBars) && minuteBars.length > 0) {
+            setTicks(
+              minuteBars.slice(-180).map((bar) => {
+                const minute = bar as Record<string, unknown>;
+                const barTime = parseSourceTimestamp(
+                  minute.time,
+                  receivedAt,
+                );
+                const indexLevel = Number(minute.indexLevel);
+                return {
+                  price: Number(minute.close),
+                  open: Number(minute.open),
+                  high: Number(minute.high),
+                  low: Number(minute.low),
+                  volume: Number(minute.volume) || 1,
+                  amount: Number(minute.amount) || 0,
+                  time: barTime.minute,
+                  sectorChange: Number(minute.sectorChange),
+                  indexChange: Number(minute.indexChange),
+                  indexLevel: Number.isFinite(indexLevel) ? indexLevel : undefined,
+                };
+              }),
+            );
+            realFeedStartedRef.current = true;
+          } else if (active) {
+            appendTick({
+              price,
+              volume: Number(readPath(payload, config.volumePath)) || 1,
+              time: sourceTimestamp.minute,
+              sectorChange: Number(readPath(payload, config.sectorPath)) || 0,
+              indexChange: Number(readPath(payload, config.indexPath)) || 0,
+              indexLevel:
+                Number(readPath(payload, config.indexLevelPath)) || undefined,
+            });
+          }
           if (active) {
+            setDailyBars(
+              Array.isArray(payloadDailyBars)
+                ? payloadDailyBars
+                    .map((bar) => {
+                      const daily = bar as Record<string, unknown>;
+                      return {
+                        date: String(daily.date || daily.trade_date || ""),
+                        open: Number(daily.open),
+                        high: Number(daily.high),
+                        low: Number(daily.low),
+                        close: Number(daily.close),
+                        volume: Number(daily.volume ?? daily.vol) || 0,
+                      };
+                    })
+                    .filter(
+                      (bar) =>
+                        /^\d{8}$/.test(bar.date) &&
+                        [bar.open, bar.high, bar.low, bar.close].every(
+                          Number.isFinite,
+                        ),
+                    )
+                : [],
+            );
+            setMarketDataContext({
+              instrumentKind:
+                payloadContext?.instrumentKind === "etf" ||
+                payloadContext?.instrumentKind === "bond"
+                  ? payloadContext.instrumentKind
+                  : "stock",
+              indexName: payloadContext?.indexName,
+              indexCode: payloadContext?.indexCode,
+              indexSource: payloadContext?.indexSource,
+              indexSourceTime: payloadContext?.indexSourceTime,
+              indexSeriesValid: payloadContext?.indexSeriesValid === true,
+              sectorName: payloadContext?.sectorName,
+              sectorCode: payloadContext?.sectorCode,
+              sectorSource: payloadContext?.sectorSource,
+              sectorSourceTime: payloadContext?.sectorSourceTime,
+              sectorSeriesValid: payloadContext?.sectorSeriesValid === true,
+              dailySeriesValid: payloadContext?.dailySeriesValid === true,
+              error: payloadContext?.error,
+            });
+            setDataValidation(
+              validation
+                ? {
+                    passed: validation.passed === true,
+                    status: validation.status || "unknown",
+                    reason: validation.reason || "官方行情校验状态未知",
+                  }
+                : {
+                    passed: false,
+                    status: "unavailable",
+                    reason: "行情源未返回官方行情校验结果",
+                  },
+            );
             setHoldings((current) =>
               current.map((holding) =>
                 holding.code === selected.code
@@ -1217,11 +1528,11 @@ export default function MarketCopilot() {
             );
             setFeedMessage(
               marketStatus.allowQuotes
-                ? `${config.providerName} · REST ${config.interval / 1000}秒轮询${
+                ? `${config.providerName} · 最新价 ${config.interval / 1000}秒轮询${
                     Number.isFinite(fetchLatencyMs)
                       ? ` · 源站 ${Math.round(fetchLatencyMs)}ms`
                       : ""
-                  }`
+                  } · ${validation?.passed ? "官方行情校验通过" : validation?.reason || "等待官方行情校验"}`
                 : `${marketStatus.label} · 已读取最近真实行情快照，B/S判断冻结`,
             );
           }
@@ -1595,9 +1906,12 @@ export default function MarketCopilot() {
     [selected.code, selectedTrades],
   );
   const recommendedQuantity =
-    cyclePhase === "neutral"
-      ? oneThirdQuantity(selected.sellable)
-      : cycleQuantity;
+    recommendTrancheQuantity(
+      selected.sellable,
+      signal,
+      cyclePhase,
+      cycleQuantity,
+    );
   const realizedCostReductionPerShare =
     selected.shares > 0
       ? tradeSummary.contribution / selected.shares
@@ -1613,7 +1927,7 @@ export default function MarketCopilot() {
       ? demoPlaying
         ? connection
         : "paused"
-      : stale
+      : stale || (dataValidation !== null && !dataValidation.passed)
         ? "error"
         : paused || !marketStatus.allowQuotes
           ? "paused"
@@ -1625,6 +1939,8 @@ export default function MarketCopilot() {
         : "演练未启动"
       : stale
         ? "行情已陈旧"
+        : dataValidation !== null && !dataValidation.passed
+          ? "官方行情校验冻结"
         : displayedConnection === "connected"
           ? "行情已连接"
           : displayedConnection === "paused"
@@ -1658,6 +1974,9 @@ export default function MarketCopilot() {
           </div>
         </div>
         <div className="topbar-actions">
+          <Link className="button secondary button-link agent-entry" href="/bond-radar">
+            转债同步雷达
+          </Link>
           <Link className="button secondary button-link agent-entry" href="/agent">
             成功率Agent
           </Link>
@@ -1719,6 +2038,11 @@ export default function MarketCopilot() {
           交易日历依据
         </a>
         {stale && <span className="stale-warning">超过时效阈值，信号冻结</span>}
+        {config.mode !== "demo" && dataValidation && !dataValidation.passed && (
+          <span className="stale-warning">
+            官方行情校验冻结：{dataValidation.reason}
+          </span>
+        )}
       </div>
 
       <section className="workspace">
@@ -1770,7 +2094,7 @@ export default function MarketCopilot() {
           </div>
           <div className="watchlist-note">
             <span>数据边界</span>
-            网页仅轮询当前选中的股票。持仓配置只保存在这台设备；稳定的个股行业分时字段暂缺，模型按大盘中性值处理。
+            网页仅轮询当前选中的标的。持仓配置只保存在这台设备；股票使用申万一级行业分钟序列，ETF使用跟踪指数分钟序列，任一上下文缺失都会冻结B/S判断。
           </div>
         </aside>
 
@@ -1807,9 +2131,11 @@ export default function MarketCopilot() {
           <div className="market-pulse">
             <div>
               <span>
-                行业强度
-                {config.url.includes("localhost:8765")
-                  ? " · 中性代理"
+                {marketDataContext.instrumentKind === "etf"
+                  ? "跟踪指数"
+                  : "行业强度"}
+                {marketDataContext.sectorName
+                  ? ` · ${marketDataContext.sectorName}`
                   : ""}
               </span>
               <strong
@@ -1845,7 +2171,7 @@ export default function MarketCopilot() {
               </strong>
             </div>
             <div>
-              <span>MACD柱 (12,26,9)</span>
+              <span>MACD辅助 (12,26,9)</span>
               <strong
                 className={signal.macd.histogram >= 0 ? "up" : "down"}
                 title={`DIF ${signal.macd.dif.toFixed(4)} / DEA ${signal.macd.dea.toFixed(4)}`}
@@ -1902,7 +2228,7 @@ export default function MarketCopilot() {
           <div className={`strategy-card ${signal.tMode}`}>
             <div className="strategy-head">
               <div>
-                <span>视频规则模式</span>
+                <span>课程规则模式</span>
                 <strong>
                   {tModeMeta.label} · {tModeMeta.sequence}
                 </strong>
@@ -1915,7 +2241,13 @@ export default function MarketCopilot() {
                 箱体位置 <strong>{signal.rangePosition.toFixed(0)}%</strong>
               </span>
               <span>
-                量能 <strong>{signal.volumeRatio.toFixed(2)}x</strong>
+                多日位置 <strong>{signal.multiDayRangePosition.toFixed(0)}%</strong>
+              </span>
+              <span>
+                5分钟量能 <strong>{VOLUME_PHASE_LABEL[signal.volumePhase]}</strong>
+              </span>
+              <span>
+                波段量比 <strong>{signal.volumeRatio.toFixed(2)}x</strong>
               </span>
               <span>
                 个股趋势{" "}
@@ -1932,7 +2264,13 @@ export default function MarketCopilot() {
                 </strong>
               </span>
               <span>
-                单次上限 <strong>{recommendedQuantity}股</strong>
+                建议批次 <strong>{recommendedQuantity}股</strong>
+              </span>
+              <span>
+                预计差价 <strong>{signal.expectedSpreadPct.toFixed(2)}%</strong>
+              </span>
+              <span>
+                硬门槛 <strong>{signal.hardGates.filter((gate) => gate.passed).length}/5</strong>
               </span>
             </div>
           </div>
@@ -2464,7 +2802,7 @@ export default function MarketCopilot() {
             ) : (
               <>
                 <div className="source-guidance">
-                  当前默认接入项目自带的腾讯财经公开行情桥。它返回真实市场快照，但网页未验证其交易所授权实时等级；如有持牌Level-1接口可在此替换。
+                  当前默认接入项目自带的东方财富免费公开行情桥，不需要 API Key。最新价、分钟K线、日K、指数和股票行业板块来自公开接口；ETF跟踪指数无法可靠识别时会明确降级。网页仍未验证其交易所授权实时等级，如有持牌Level-1接口可在此替换。
                   <a
                     href="https://www.sseinfo.com/services/assortment/level1/"
                     target="_blank"
@@ -2680,6 +3018,84 @@ export default function MarketCopilot() {
                 </div>
               </>
             )}
+
+            <div className="stopwatch-config-section">
+              <div className="stopwatch-config-heading">
+                <div>
+                  <span className="eyebrow">随身决策终端</span>
+                  <h3>StopWatch 硬件同步</h3>
+                </div>
+                <span
+                  className={`stopwatch-status ${
+                    stopWatchStatus.includes("已同步") ? "connected" : ""
+                  }`}
+                >
+                  {stopWatchStatus}
+                </span>
+              </div>
+              <label className="wave-toggle">
+                <span>
+                  <strong>同步持仓、实时 K 线与 B/S 成熟提醒</strong>
+                  <small>手表切换标的后，电脑端会自动跟随并加载该股行情</small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={stopWatchConfig.enabled}
+                  onChange={(event) =>
+                    setStopWatchConfig((current) => ({
+                      ...current,
+                      enabled: event.target.checked,
+                    }))
+                  }
+                />
+              </label>
+              <div className="stopwatch-fields">
+                <label>
+                  <span>设备地址</span>
+                  <input
+                    type="url"
+                    value={stopWatchConfig.deviceUrl}
+                    placeholder="http://intraday-compass.local"
+                    onChange={(event) =>
+                      setStopWatchConfig((current) => ({
+                        ...current,
+                        deviceUrl: event.target.value,
+                      }))
+                    }
+                  />
+                  <small>也可填写手表屏幕显示的局域网 IP。</small>
+                </label>
+                <label>
+                  <span>设备 API Key</span>
+                  <input
+                    type="password"
+                    value={stopWatchApiKey}
+                    placeholder="仅保存在当前浏览器会话"
+                    onChange={(event) => setStopWatchApiKey(event.target.value)}
+                  />
+                  <small>测试固件默认值见硬件项目 README，正式使用请更换。</small>
+                </label>
+              </div>
+              <div className="stopwatch-actions">
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => {
+                    setStopWatchStatus("正在检测");
+                    void testStopWatchConnection(stopWatchConfig)
+                      .then(() => setStopWatchStatus("设备在线"))
+                      .catch((error: unknown) =>
+                        setStopWatchStatus(
+                          error instanceof Error ? error.message : "连接失败",
+                        ),
+                      );
+                  }}
+                >
+                  检测设备
+                </button>
+                <p>首次联网可连接手表的 Compass 热点并访问 192.168.4.1。</p>
+              </div>
+            </div>
 
             <div className="wave-config-section">
               <label className="wave-toggle">

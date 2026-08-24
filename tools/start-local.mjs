@@ -29,8 +29,8 @@ if (!(await bridgeHealthy())) {
 
 const packageRunner = process.env.npm_execpath;
 const webProcess = packageRunner
-  ? spawn(process.execPath, [packageRunner, "run", "dev", "--", "--host=localhost", "--port=4173"], { stdio: "inherit" })
-  : spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "dev", "--", "--host=localhost", "--port=4173"], { stdio: "inherit" });
+  ? spawn(process.execPath, [packageRunner, "run", "dev", "--hostname=localhost", "--port=4173"], { stdio: "inherit" })
+  : spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "dev", "--", "--hostname=localhost", "--port=4173"], { stdio: "inherit" });
 
 function stop(exitCode = 0) {
   if (bridgeProcess && !bridgeProcess.killed) bridgeProcess.kill();

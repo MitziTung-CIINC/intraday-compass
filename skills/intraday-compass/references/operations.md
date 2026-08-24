@@ -23,8 +23,16 @@ The bridge binds to `127.0.0.1` by default. Override only with reviewed environm
 
 - `T0_QUOTE_BRIDGE_HOST`
 - `T0_QUOTE_BRIDGE_PORT`
+- `EASTMONEY_CONTEXT_REFRESH_MS` (default `5000`)
+- `EASTMONEY_DAILY_REFRESH_MS` (default `21600000`)
+- `EASTMONEY_MAPPING_REFRESH_MS` (default `86400000`)
+- `EASTMONEY_MINUTE_MAX_AGE_MS` (default `90000`)
+- `EASTMONEY_PRICE_TOLERANCE_PCT` (default `1`)
+- `T0_LATEST_MAX_AGE_MS` (default `15000`)
 
-It requests `https://qt.gtimg.cn/q=<market><code>,sh000001`, decodes GBK, and labels the provider `tencent-public-quote`. Public availability, licensing tier, completeness, and latency are not guaranteed. The displayed sector field currently uses the Shanghai Composite change as a neutral proxy and must remain labeled as a proxy.
+The bridge requires no API key. The latest-price channel requests Eastmoney `stock/get` and labels the source `eastmoney-official-snapshot`. The minute channel requests Eastmoney `stock/trends2/get` for the instrument and matching broad-market index; stocks also request the actual industry board. Multi-day structure uses Eastmoney `stock/kline/get`. The bridge aligns context bars by the latest timestamp at or before each instrument minute and returns them in `data.minuteBars`. ETF tracking-index mapping is not guessed when the public endpoints do not provide it; that auxiliary series is marked unavailable. Public availability, licensing tier, completeness, and latency are not guaranteed. Never substitute an index snapshot for missing industry history.
+
+The bridge returns a required `meta.validation` object. Only `passed: true` enables live B/S research signals. Missing instrument/index/daily context, a minute bar older than 90 seconds, a latest quote older than 15 seconds, or a snapshot-to-minute price divergence over 1% freezes B/S judgement. Industry or ETF tracking-index context is auxiliary and may be unavailable without freezing the model. These thresholds can be tuned with the environment variables above after measuring actual source behavior.
 
 ## Custom feed contract
 
@@ -39,7 +47,33 @@ The default REST mapping accepts this shape:
     "time": "2026-08-03T10:31:00+08:00",
     "sectorChange": -0.42,
     "indexChange": -0.18,
-    "indexLevel": 3560.21
+    "indexLevel": 3560.21,
+    "minuteBars": [
+      {
+        "time": "2026-08-03T10:31:00+08:00",
+        "open": 33.8,
+        "close": 33.82,
+        "high": 33.85,
+        "low": 33.78,
+        "volume": 152600,
+        "amount": 5160232,
+        "sectorChange": -0.42,
+        "indexChange": -0.18
+      }
+    ],
+    "dailyBars": [],
+    "context": {
+      "indexSeriesValid": true,
+      "sectorSeriesValid": true,
+      "dailySeriesValid": true
+    }
+  },
+  "meta": {
+    "validation": {
+      "passed": true,
+      "status": "passed",
+      "reason": "东方财富官方快照、分钟 K 线和市场上下文校验通过"
+    }
   }
 }
 ```
