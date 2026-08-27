@@ -144,6 +144,8 @@ type SignalAlert = {
   code: string;
   price: number;
   occurredAt: number;
+  historicalPreview?: boolean;
+  sourceTime?: string;
 };
 
 type NotificationPermissionState =
@@ -285,22 +287,25 @@ function playSignalTone(
   context: AudioContext,
   state: "confirmB" | "confirmS",
 ) {
-  const frequencies = state === "confirmB" ? [620, 820] : [820, 520];
+  const frequencies =
+    state === "confirmB"
+      ? [620, 720, 820]
+      : [820, 745, 670, 595, 520];
   const startedAt = context.currentTime + 0.02;
 
   frequencies.forEach((frequency, index) => {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
-    const noteStart = startedAt + index * 0.2;
+    const noteStart = startedAt + index * 0.18;
     oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(frequency, noteStart);
     gain.gain.setValueAtTime(0.0001, noteStart);
     gain.gain.exponentialRampToValueAtTime(0.16, noteStart + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.16);
+    gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.13);
     oscillator.connect(gain);
     gain.connect(context.destination);
     oscillator.start(noteStart);
-    oscillator.stop(noteStart + 0.18);
+    oscillator.stop(noteStart + 0.15);
   });
 }
 
@@ -1096,13 +1101,39 @@ export default function MarketCopilot() {
     [],
   );
 
+  const showSystemNotification = useCallback(
+    (
+      state: "confirmB" | "confirmS",
+      holdingName: string,
+      code: string,
+      price: number,
+      historicalPreview = false,
+    ) => {
+      if (!("Notification" in window) || Notification.permission !== "granted") {
+        return false;
+      }
+      const meta = SIGNAL_META[state];
+      const notification = new Notification(`${holdingName} · ${meta.label}`, {
+        body: `${historicalPreview ? "历史预览：" : ""}${meta.short} · ¥${price.toFixed(2)}。网页不执行任何交易。`,
+        tag: `intraday-compass-${state}-${code}`,
+        requireInteraction: true,
+        silent: false,
+      });
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+      return true;
+    },
+    [],
+  );
+
   const notify = useCallback(
     (state: SignalState, holding: Holding) => {
       if (
         !alertsEnabled ||
         (state !== "confirmB" && state !== "confirmS")
       ) return;
-      const meta = SIGNAL_META[state];
       setSignalAlert({
         state,
         holdingName: holding.name.replace(/^示例：/, ""),
@@ -1111,19 +1142,19 @@ export default function MarketCopilot() {
         occurredAt: Date.now(),
       });
       playAlertSound(state);
-      if ("Notification" in window && Notification.permission === "granted") {
-        const notification = new Notification(`${holding.name} · ${meta.label}`, {
-          body: `${meta.short}。网页不执行任何交易。`,
-        });
-        notification.onclick = () => window.focus();
-      }
+      showSystemNotification(
+        state,
+        holding.name.replace(/^示例：/, ""),
+        holding.code,
+        holding.price,
+      );
       if ("vibrate" in navigator) {
         navigator.vibrate(
           state === "confirmB" ? [100, 80, 100] : [380],
         );
       }
     },
-    [alertsEnabled, playAlertSound],
+    [alertsEnabled, playAlertSound, showSystemNotification],
   );
 
   useEffect(() => {
@@ -1136,14 +1167,17 @@ export default function MarketCopilot() {
   }, []);
 
   useEffect(() => {
-    if (!window.isSecureContext) {
-      setNotificationPermission("insecure");
-    } else if ("Notification" in window) {
-      setNotificationPermission(Notification.permission);
-    } else {
-      setNotificationPermission("unsupported");
-    }
+    const permissionTimer = window.setTimeout(() => {
+      if (!window.isSecureContext) {
+        setNotificationPermission("insecure");
+      } else if ("Notification" in window) {
+        setNotificationPermission(Notification.permission);
+      } else {
+        setNotificationPermission("unsupported");
+      }
+    }, 0);
     return () => {
+      window.clearTimeout(permissionTimer);
       const context = audioContextRef.current;
       if (context && context.state !== "closed") void context.close();
     };
@@ -1777,6 +1811,16 @@ export default function MarketCopilot() {
     }
     setNotificationPermission(permission);
     setAlertsEnabled(true);
+    if (permission === "granted") {
+      const notification = new Notification("分时罗盘 · 系统通知已开启", {
+        body: "页面退到后台后，B点三声、S点五声成熟提醒仍会发送到系统通知中心。",
+        tag: "intraday-compass-notification-enabled",
+      });
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
     setFeedMessage(
       permission === "granted"
         ? "B/S弹窗、声音和系统通知已开启"
@@ -1785,6 +1829,50 @@ export default function MarketCopilot() {
           : permission === "insecure"
             ? "B/S弹窗和声音已开启；系统通知需要HTTPS"
             : "B/S弹窗和声音已开启；当前浏览器不支持系统通知",
+    );
+  };
+
+  const previewHistoricalSignal = async (state: "confirmB" | "confirmS") => {
+    const AudioContextConstructor =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (AudioContextConstructor) {
+      const context =
+        audioContextRef.current ?? new AudioContextConstructor();
+      audioContextRef.current = context;
+      if (context.state === "suspended") await context.resume();
+      playSignalTone(context, state);
+    }
+
+    const historicalTicks = ticks.length > 0 ? ticks : makeInitialTicks(selected);
+    const historicalTick = historicalTicks.reduce((candidate, tick) => {
+      if (state === "confirmB") {
+        return tick.price < candidate.price ? tick : candidate;
+      }
+      return tick.price > candidate.price ? tick : candidate;
+    }, historicalTicks[0]);
+
+    setSignalAlert({
+      state,
+      holdingName: selected.name.replace(/^示例：/, ""),
+      code: selected.code,
+      price: historicalTick.price,
+      occurredAt: Date.now(),
+      historicalPreview: true,
+      sourceTime: historicalTick.time,
+    });
+    const notificationSent = showSystemNotification(
+      state,
+      selected.name.replace(/^示例：/, ""),
+      selected.code,
+      historicalTick.price,
+      true,
+    );
+    setFeedMessage(
+      notificationSent
+        ? "历史预览已同时发送系统通知"
+        : "历史预览已显示；如需后台系统通知，请先点击开启并允许通知权限",
     );
   };
 
@@ -2507,7 +2595,7 @@ export default function MarketCopilot() {
               ? notificationPermission === "granted"
                 ? "网页弹窗、提示音和系统通知均已开启。"
                 : "网页弹窗和提示音已开启；系统通知尚未授权。"
-              : "仅在B/S确认成熟时提醒，观察信号不会打扰。"}
+              : "仅在B/S确认成熟时提醒：B点连续三声，S点连续五声。"}
           </p>
           <div className="alert-permission-summary">
             <strong>浏览器权限说明</strong>
@@ -2735,14 +2823,20 @@ export default function MarketCopilot() {
                 {signalAlert.state === "confirmB" ? "B" : "S"}
               </span>
               <div>
-                <span className="eyebrow">条件成熟提醒</span>
+                <span className="eyebrow">
+                  {signalAlert.historicalPreview
+                    ? "历史回测预览 · 非实时信号"
+                    : "条件成熟提醒"}
+                </span>
                 <h2 id="signal-alert-title">
                   {signalAlert.holdingName} · {SIGNAL_META[signalAlert.state].label}
                 </h2>
               </div>
             </div>
             <p id="signal-alert-description">
-              {SIGNAL_META[signalAlert.state].short}。请先复核行情源时间、硬门槛、可卖数量与预计差价，再自行决定是否操作。
+              {signalAlert.historicalPreview
+                ? `${SIGNAL_META[signalAlert.state].short}。这是用历史样例高低点演示弹窗与声音，不代表当前行情，也不计入模型成绩。`
+                : `${SIGNAL_META[signalAlert.state].short}。请先复核行情源时间、硬门槛、可卖数量与预计差价，再自行决定是否操作。`}
             </p>
             <div className="signal-alert-facts">
               <span>
@@ -2752,7 +2846,12 @@ export default function MarketCopilot() {
                 触发价格 <strong>¥{signalAlert.price.toFixed(2)}</strong>
               </span>
               <span>
-                北京时间 <strong>{formatShanghaiTimestamp(signalAlert.occurredAt)}</strong>
+                {signalAlert.historicalPreview ? "历史样例时间" : "北京时间"}{" "}
+                <strong>
+                  {signalAlert.historicalPreview
+                    ? signalAlert.sourceTime
+                    : formatShanghaiTimestamp(signalAlert.occurredAt)}
+                </strong>
               </span>
             </div>
             <button
@@ -2762,7 +2861,11 @@ export default function MarketCopilot() {
             >
               我知道了，返回复核
             </button>
-            <small>只读决策辅助，不连接券商账户，不会自动下单。</small>
+            <small>
+              {signalAlert.historicalPreview
+                ? "仅用于本地试听和界面验收，不申请系统通知权限，不会自动下单。"
+                : "只读决策辅助，不连接券商账户，不会自动下单。"}
+            </small>
           </section>
         </div>
       )}
@@ -3022,6 +3125,25 @@ export default function MarketCopilot() {
                 <p>
                   样例分时默认静止，保存后需手动点击“开始历史演练”才会推进。休市日也不会把它标记为实时数据。
                 </p>
+                <div className="demo-alert-preview" aria-label="历史提醒预览">
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => void previewHistoricalSignal("confirmB")}
+                  >
+                    预览历史B点提醒
+                  </button>
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => void previewHistoricalSignal("confirmS")}
+                  >
+                    预览历史S点提醒
+                  </button>
+                  <small>
+                    已允许通知时会同步发送系统测试通知；尚未授权时请先点击页面中的“开启B/S弹窗与声音”。
+                  </small>
+                </div>
               </div>
             ) : (
               <>

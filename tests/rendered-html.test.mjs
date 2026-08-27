@@ -68,9 +68,13 @@ test("includes mature B/S popup, sound, and browser permission guidance", async 
     "utf8",
   );
   assert.match(source, /playSignalTone/);
+  assert.match(source, /\[620, 720, 820\]/);
+  assert.match(source, /\[820, 745, 670, 595, 520\]/);
   assert.match(source, /role="alertdialog"/);
   assert.match(source, /开启B\/S弹窗与声音/);
   assert.match(source, /Notification\.requestPermission/);
+  assert.match(source, /requireInteraction: true/);
+  assert.match(source, /系统通知已开启/);
   assert.match(source, /系统通知需使用 HTTPS/);
   assert.match(source, /无需麦克风、摄像头、位置或券商账户权限/);
   assert.doesNotMatch(source, /\["watchB", "watchS", "confirmB", "confirmS"\]/);

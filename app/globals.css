@@ -1446,6 +1446,18 @@ textarea:focus {
   line-height: 1.6;
 }
 
+.demo-alert-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.demo-alert-preview small {
+  flex-basis: 100%;
+  color: var(--text-muted);
+}
+
 .source-guidance {
   display: flex;
   align-items: center;
