@@ -138,6 +138,19 @@ type MarketDataContext = {
   error?: string | null;
 };
 
+type SignalAlert = {
+  state: "confirmB" | "confirmS";
+  holdingName: string;
+  code: string;
+  price: number;
+  occurredAt: number;
+};
+
+type NotificationPermissionState =
+  | NotificationPermission
+  | "unsupported"
+  | "insecure";
+
 const EMPTY_MARKET_CONTEXT: MarketDataContext = {
   instrumentKind: "stock",
   indexSeriesValid: false,
@@ -267,6 +280,44 @@ const SIGNAL_META: Record<
     short: "S点条件成立，仅作人工真实操作参考",
   },
 };
+
+function playSignalTone(
+  context: AudioContext,
+  state: "confirmB" | "confirmS",
+) {
+  const frequencies = state === "confirmB" ? [620, 820] : [820, 520];
+  const startedAt = context.currentTime + 0.02;
+
+  frequencies.forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const noteStart = startedAt + index * 0.2;
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, noteStart);
+    gain.gain.setValueAtTime(0.0001, noteStart);
+    gain.gain.exponentialRampToValueAtTime(0.16, noteStart + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.16);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(noteStart);
+    oscillator.stop(noteStart + 0.18);
+  });
+}
+
+function playAlertEnabledTone(context: AudioContext) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const startedAt = context.currentTime + 0.02;
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(680, startedAt);
+  gain.gain.setValueAtTime(0.0001, startedAt);
+  gain.gain.exponentialRampToValueAtTime(0.1, startedAt + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startedAt + 0.12);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startedAt);
+  oscillator.stop(startedAt + 0.14);
+}
 
 function readPath(input: unknown, path: string): unknown {
   if (!path.trim()) return undefined;
@@ -902,7 +953,10 @@ export default function MarketCopilot() {
     oneThirdQuantity(DEFAULT_HOLDINGS[0].sellable),
   );
   const [trades, setTrades] = useState<ActualTrade[]>([]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [alertsEnabled, setAlertsEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermissionState>("default");
+  const [signalAlert, setSignalAlert] = useState<SignalAlert | null>(null);
   const [eventRiskLocked, setEventRiskLocked] = useState(false);
   const [feedMessage, setFeedMessage] = useState("正在连接东方财富官方行情桥");
   const [executionPrice, setExecutionPrice] = useState(
@@ -922,6 +976,7 @@ export default function MarketCopilot() {
   const cycleQuantityRef = useRef(0);
   const tickIndexRef = useRef(64);
   const realFeedStartedRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const selected =
     holdings.find((holding) => holding.code === selectedCode) ?? holdings[0];
@@ -1027,30 +1082,48 @@ export default function MarketCopilot() {
     [cyclePhase, latestTick, monitoringActive, signal, waveGuide],
   );
 
+  const playAlertSound = useCallback(
+    (state: "confirmB" | "confirmS") => {
+      const context = audioContextRef.current;
+      if (!context) return;
+      const play = () => playSignalTone(context, state);
+      if (context.state === "suspended") {
+        void context.resume().then(play).catch(() => undefined);
+      } else {
+        play();
+      }
+    },
+    [],
+  );
+
   const notify = useCallback(
     (state: SignalState, holding: Holding) => {
       if (
-        !notificationsEnabled ||
-        !["watchB", "watchS", "confirmB", "confirmS"].includes(state)
-      )
-        return;
+        !alertsEnabled ||
+        (state !== "confirmB" && state !== "confirmS")
+      ) return;
       const meta = SIGNAL_META[state];
+      setSignalAlert({
+        state,
+        holdingName: holding.name.replace(/^示例：/, ""),
+        code: holding.code,
+        price: holding.price,
+        occurredAt: Date.now(),
+      });
+      playAlertSound(state);
       if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(`${holding.name} · ${meta.label}`, {
+        const notification = new Notification(`${holding.name} · ${meta.label}`, {
           body: `${meta.short}。网页不执行任何交易。`,
         });
+        notification.onclick = () => window.focus();
       }
       if ("vibrate" in navigator) {
         navigator.vibrate(
-          state === "watchB" || state === "watchS"
-            ? [80]
-            : state === "confirmB"
-              ? [100, 80, 100]
-              : [380],
+          state === "confirmB" ? [100, 80, 100] : [380],
         );
       }
     },
-    [notificationsEnabled],
+    [alertsEnabled, playAlertSound],
   );
 
   useEffect(() => {
@@ -1059,6 +1132,20 @@ export default function MarketCopilot() {
     return () => {
       window.clearTimeout(first);
       window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!window.isSecureContext) {
+      setNotificationPermission("insecure");
+    } else if ("Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    } else {
+      setNotificationPermission("unsupported");
+    }
+    return () => {
+      const context = audioContextRef.current;
+      if (context && context.state !== "closed") void context.close();
     };
   }, []);
 
@@ -1660,12 +1747,45 @@ export default function MarketCopilot() {
   ]);
 
   const requestNotifications = async () => {
-    if (!("Notification" in window)) {
-      setFeedMessage("当前浏览器不支持系统通知");
+    if (alertsEnabled) {
+      setAlertsEnabled(false);
+      setSignalAlert(null);
+      setFeedMessage("B/S成熟提醒已关闭");
       return;
     }
-    const permission = await Notification.requestPermission();
-    setNotificationsEnabled(permission === "granted");
+
+    const AudioContextConstructor =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (AudioContextConstructor) {
+      const context =
+        audioContextRef.current ?? new AudioContextConstructor();
+      audioContextRef.current = context;
+      if (context.state === "suspended") await context.resume();
+      playAlertEnabledTone(context);
+    }
+
+    let permission: NotificationPermissionState = "unsupported";
+    if (!window.isSecureContext) {
+      permission = "insecure";
+    } else if ("Notification" in window) {
+      permission =
+        Notification.permission === "default"
+          ? await Notification.requestPermission()
+          : Notification.permission;
+    }
+    setNotificationPermission(permission);
+    setAlertsEnabled(true);
+    setFeedMessage(
+      permission === "granted"
+        ? "B/S弹窗、声音和系统通知已开启"
+        : permission === "denied"
+          ? "B/S弹窗和声音已开启；系统通知被浏览器拒绝"
+          : permission === "insecure"
+            ? "B/S弹窗和声音已开启；系统通知需要HTTPS"
+            : "B/S弹窗和声音已开启；当前浏览器不支持系统通知",
+    );
   };
 
   const recordActualTrade = async (side: "buy" | "sell") => {
@@ -2375,12 +2495,26 @@ export default function MarketCopilot() {
             </span>
           </label>
 
-          <button className="button notify" onClick={requestNotifications}>
-            {notificationsEnabled ? "系统提醒已开启" : "开启系统提醒"}
+          <button
+            className="button notify"
+            aria-pressed={alertsEnabled}
+            onClick={requestNotifications}
+          >
+            {alertsEnabled ? "关闭B/S成熟提醒" : "开启B/S弹窗与声音"}
           </button>
-          <p className="microcopy">
-            仅在B/S确认时提醒。浏览器需保持打开，不构成投资建议。
+          <p className="microcopy" role="status">
+            {alertsEnabled
+              ? notificationPermission === "granted"
+                ? "网页弹窗、提示音和系统通知均已开启。"
+                : "网页弹窗和提示音已开启；系统通知尚未授权。"
+              : "仅在B/S确认成熟时提醒，观察信号不会打扰。"}
           </p>
+          <div className="alert-permission-summary">
+            <strong>浏览器权限说明</strong>
+            <span>网页弹窗无需权限；提示音需先点击上方按钮解锁播放。</span>
+            <span>系统通知需使用 HTTPS，并在浏览器询问时选择“允许”。</span>
+            <span>无需麦克风、摄像头、位置或券商账户权限。</span>
+          </div>
         </aside>
       </section>
 
@@ -2578,6 +2712,60 @@ export default function MarketCopilot() {
           )}
         </div>
       </section>
+
+      {signalAlert && (
+        <div
+          className="modal-backdrop signal-alert-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setSignalAlert(null);
+          }}
+        >
+          <section
+            className={`signal-alert-dialog ${
+              signalAlert.state === "confirmB" ? "buy" : "sell"
+            }`}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="signal-alert-title"
+            aria-describedby="signal-alert-description"
+          >
+            <div className="signal-alert-heading">
+              <span className="signal-alert-mark">
+                {signalAlert.state === "confirmB" ? "B" : "S"}
+              </span>
+              <div>
+                <span className="eyebrow">条件成熟提醒</span>
+                <h2 id="signal-alert-title">
+                  {signalAlert.holdingName} · {SIGNAL_META[signalAlert.state].label}
+                </h2>
+              </div>
+            </div>
+            <p id="signal-alert-description">
+              {SIGNAL_META[signalAlert.state].short}。请先复核行情源时间、硬门槛、可卖数量与预计差价，再自行决定是否操作。
+            </p>
+            <div className="signal-alert-facts">
+              <span>
+                证券代码 <strong>{signalAlert.code}</strong>
+              </span>
+              <span>
+                触发价格 <strong>¥{signalAlert.price.toFixed(2)}</strong>
+              </span>
+              <span>
+                北京时间 <strong>{formatShanghaiTimestamp(signalAlert.occurredAt)}</strong>
+              </span>
+            </div>
+            <button
+              className="button primary"
+              autoFocus
+              onClick={() => setSignalAlert(null)}
+            >
+              我知道了，返回复核
+            </button>
+            <small>只读决策辅助，不连接券商账户，不会自动下单。</small>
+          </section>
+        </div>
+      )}
 
       {holdingsOpen && (
         <div

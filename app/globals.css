@@ -781,6 +781,30 @@ p {
   color: var(--brand-dark);
 }
 
+.button.notify[aria-pressed="true"] {
+  border-color: #9bcbb7;
+  background: #eefaf5;
+  color: #116b47;
+}
+
+.alert-permission-summary {
+  display: grid;
+  gap: 4px;
+  margin: 9px 15px 14px;
+  border: 1px solid var(--soft-line);
+  border-radius: 6px;
+  background: #fafbfc;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.alert-permission-summary strong {
+  color: var(--ink);
+  font-size: 11px;
+}
+
 .risk-lock {
   display: flex;
   align-items: flex-start;
@@ -1024,6 +1048,104 @@ textarea:focus {
   place-items: center;
   background: rgba(19, 24, 31, 0.42);
   padding: 24px;
+}
+
+.signal-alert-backdrop {
+  z-index: 60;
+  background: rgba(12, 18, 25, 0.58);
+  backdrop-filter: blur(4px);
+}
+
+.signal-alert-dialog {
+  width: min(460px, 100%);
+  border: 1px solid var(--line);
+  border-top: 5px solid var(--brand);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(9, 15, 22, 0.28);
+  padding: 24px;
+}
+
+.signal-alert-dialog.buy {
+  border-top-color: var(--buy);
+}
+
+.signal-alert-dialog.sell {
+  border-top-color: var(--sell);
+}
+
+.signal-alert-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.signal-alert-heading h2 {
+  margin: 4px 0 0;
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+.signal-alert-mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.signal-alert-dialog.buy .signal-alert-mark {
+  background: var(--buy);
+}
+
+.signal-alert-dialog.sell .signal-alert-mark {
+  background: var(--sell);
+}
+
+.signal-alert-dialog > p {
+  margin: 18px 0;
+  color: #3f4955;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.signal-alert-facts {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  border: 1px solid var(--soft-line);
+  border-radius: 7px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.signal-alert-facts span {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.signal-alert-facts strong {
+  color: var(--ink);
+}
+
+.signal-alert-dialog .button {
+  width: 100%;
+}
+
+.signal-alert-dialog > small {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 10px;
 }
 
 .config-modal {
