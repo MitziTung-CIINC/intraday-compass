@@ -1,0 +1,13 @@
+[Unit]
+Description=Publish the verified bond radar before noon on trading days
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 11:35:00 Asia/Shanghai
+OnCalendar=Mon..Fri *-*-* 11:45:00 Asia/Shanghai
+OnCalendar=Mon..Fri *-*-* 11:55:00 Asia/Shanghai
+AccuracySec=30s
+Persistent=true
+Unit=intraday-compass-bond-radar.service
+
+[Install]
+WantedBy=timers.target

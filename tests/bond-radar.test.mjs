@@ -8,6 +8,7 @@ import {
   effectiveRangePosition,
   evaluateTrendEligibility,
   pearsonCorrelation,
+  validateMiddaySnapshot,
 } from "../tools/update-bond-radar.mjs";
 
 test("minute paths report perfect positive and negative correlations", () => {
@@ -73,4 +74,31 @@ test("trend gate treats all pairs equally and rejects non-upward linkage", () =>
   const result = evaluateTrendEligibility(fallingStock);
   assert.equal(result.passed, false);
   assert.ok(result.failedReasons.includes("转债与正股未形成日内向上结构"));
+});
+
+test("midday publication requires today's complete 11:30 minute paths", () => {
+  const snapshot = {
+    tradeDate: "2026-08-27",
+    latestMinute: "11:30",
+    items: [
+      {
+        professionalScore: 88,
+        bond: { code: "110001" },
+        stock: { code: "600001" },
+        sync: {
+          syncMode: "minute-path",
+          tradeDate: "2026-08-27",
+          sampleCount: 121,
+          syncRate: 82,
+        },
+      },
+    ],
+  };
+
+  assert.equal(validateMiddaySnapshot(snapshot, "2026-08-27").published, true);
+  assert.equal(validateMiddaySnapshot(snapshot, "2026-08-28").published, false);
+  assert.throws(
+    () => validateMiddaySnapshot({ ...snapshot, latestMinute: "11:29" }, "2026-08-27"),
+    /11:30/,
+  );
 });

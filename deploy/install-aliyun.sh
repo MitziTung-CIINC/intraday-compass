@@ -61,6 +61,8 @@ run_logged runuser -u "${APP_USER}" -- env HOME="${APP_HOME}" "${pnpm_binary}" -
 
 run_logged install -m 0644 "${DEPLOY_DIR}/deploy/intraday-compass-quote.service" /etc/systemd/system/intraday-compass-quote.service
 run_logged install -m 0644 "${DEPLOY_DIR}/deploy/intraday-compass-web.service" /etc/systemd/system/intraday-compass-web.service
+run_logged install -m 0644 "${DEPLOY_DIR}/deploy/intraday-compass-bond-radar.service" /etc/systemd/system/intraday-compass-bond-radar.service
+run_logged install -m 0644 "${DEPLOY_DIR}/deploy/intraday-compass-bond-radar.timer" /etc/systemd/system/intraday-compass-bond-radar.timer
 
 if [[ -f /etc/nginx/sites-available/00t00.com ]]; then
   run_logged cp -a /etc/nginx/sites-available/00t00.com "/etc/nginx/sites-available/00t00.com.backup.$(date +%Y%m%d%H%M%S)"
@@ -71,6 +73,7 @@ run_logged ln -sfn /etc/nginx/sites-available/00t00.com /etc/nginx/sites-enabled
 run_logged systemctl daemon-reload
 run_logged systemctl enable --now intraday-compass-quote.service
 run_logged systemctl enable --now intraday-compass-web.service
+run_logged systemctl enable --now intraday-compass-bond-radar.timer
 run_logged nginx -t
 run_logged systemctl reload nginx
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +23,8 @@ const MIN_STOCK_RANGE_POSITION = 60;
 const MIN_BOND_RANGE_POSITION = 55;
 const MIN_BOND_CAPTURE_RATIO = 0.25;
 const SYNC_ENRICHMENT_POOL_SIZE = 24;
+const MIDDAY_MINUTE = "11:30";
+const MIN_MIDDAY_SAMPLE_COUNT = 90;
 
 const sleep = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -107,6 +109,37 @@ function marketPhaseAt(date = new Date()) {
   if (minutes < 570) return "待开盘";
   if (minutes < 780) return "午间休市";
   return "已收盘";
+}
+
+export function validateMiddaySnapshot(snapshot, expectedTradeDate) {
+  if (snapshot?.tradeDate !== expectedTradeDate) {
+    return {
+      published: false,
+      reason: `行情交易日 ${snapshot?.tradeDate ?? "未知"} 与 ${expectedTradeDate} 不一致`,
+    };
+  }
+  if (!snapshot.latestMinute || snapshot.latestMinute < MIDDAY_MINUTE) {
+    throw new Error(
+      `午盘分钟数据尚未完整：最新 ${snapshot.latestMinute ?? "未知"}，要求至少 ${MIDDAY_MINUTE}`,
+    );
+  }
+  if (!Array.isArray(snapshot.items) || snapshot.items.length === 0) {
+    throw new Error("午盘快照没有可发布的转债/正股组合");
+  }
+  const complete = snapshot.items.every(
+    (item) =>
+      item?.bond?.code &&
+      item?.stock?.code &&
+      Number.isFinite(item.professionalScore) &&
+      item?.sync?.syncMode === "minute-path" &&
+      item.sync.tradeDate === expectedTradeDate &&
+      item.sync.sampleCount >= MIN_MIDDAY_SAMPLE_COUNT &&
+      Number.isFinite(item.sync.syncRate),
+  );
+  if (!complete) {
+    throw new Error("午盘快照缺少完整的分钟同步、评分或证券映射字段");
+  }
+  return { published: true, reason: "午盘快照校验通过" };
 }
 
 async function fetchEastmoney(pathname, params, label) {
@@ -910,14 +943,13 @@ async function writeSnapshot(snapshot) {
     mkdir(archiveDirectory, { recursive: true }),
   ]);
   const serialized = `${JSON.stringify(snapshot, null, 2)}\n`;
-  await Promise.all([
-    writeFile(path.join(publicDirectory, "bond-radar.json"), serialized, "utf8"),
-    writeFile(
-      path.join(archiveDirectory, `${snapshot.tradeDate}.json`),
-      serialized,
-      "utf8",
-    ),
-  ]);
+  const writeAtomically = async (target) => {
+    const temporary = `${target}.${process.pid}.tmp`;
+    await writeFile(temporary, serialized, "utf8");
+    await rename(temporary, target);
+  };
+  await writeAtomically(path.join(archiveDirectory, `${snapshot.tradeDate}.json`));
+  await writeAtomically(path.join(publicDirectory, "bond-radar.json"));
 }
 
 async function main() {
@@ -1004,9 +1036,41 @@ async function main() {
     );
     return;
   }
+  const middayPublish = process.env.BOND_RADAR_PUBLISH_MODE === "midday";
+  const expectedTradeDate = formatChinaTime().slice(0, 10);
+  if (middayPublish) {
+    const existingSnapshots = [
+      path.join(PROJECT_ROOT, "dist", "client", "data", "bond-radar.json"),
+      path.join(PROJECT_ROOT, "public", "data", "bond-radar.json"),
+    ];
+    for (const snapshotPath of existingSnapshots) {
+      try {
+        const existing = JSON.parse(await readFile(snapshotPath, "utf8"));
+        if (validateMiddaySnapshot(existing, expectedTradeDate).published) {
+          process.stdout.write(
+            `${JSON.stringify({ published: false, reason: "今日午盘快照已发布", tradeDate: expectedTradeDate }, null, 2)}\n`,
+          );
+          return;
+        }
+      } catch {
+        // Try the next snapshot, then rebuild when none is publishable.
+      }
+    }
+  }
+
   const snapshot = await buildBondRadarSnapshot();
+  if (middayPublish) {
+    const validation = validateMiddaySnapshot(snapshot, expectedTradeDate);
+    if (!validation.published) {
+      process.stdout.write(
+        `${JSON.stringify({ ...validation, tradeDate: snapshot.tradeDate }, null, 2)}\n`,
+      );
+      return;
+    }
+  }
   await writeSnapshot(snapshot);
   const summary = {
+    published: true,
     tradeDate: snapshot.tradeDate,
     generatedAtChina: snapshot.generatedAtChina,
     providerTotal: snapshot.universe.providerTotal,
