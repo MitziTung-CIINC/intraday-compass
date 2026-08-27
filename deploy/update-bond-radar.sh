@@ -20,4 +20,4 @@ fi
 
 runuser -u "${APP_USER}" -- env HOME="${APP_HOME}" /usr/bin/pnpm --dir "${DEPLOY_DIR}" build
 systemctl restart intraday-compass-web.service
-curl -fsS http://127.0.0.1:4173/data/bond-radar.json >/dev/null
+curl -fsS --retry 20 --retry-delay 1 --retry-connrefused --max-time 30 http://127.0.0.1:4173/data/bond-radar.json >/dev/null
