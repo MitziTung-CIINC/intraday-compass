@@ -2997,10 +2997,10 @@ export default function MarketCopilot() {
                       }))
                     }
                   >
-                    <option value="t1">T+1 · A股及境内股票ETF通常选择</option>
-                    <option value="t0">T+0 · 仅限确认支持当日回转的ETF</option>
+                    <option value="t1">T+1 · A股及不支持当日回转的ETF</option>
+                    <option value="t0">T+0 · 可转债及支持当日回转的ETF</option>
                   </select>
-                  <small>请以券商页面和基金交易规则为准，工具不会只凭代码猜测。</small>
+                  <small>可转债按T+0处理；ETF请以券商页面和基金交易规则为准。</small>
                 </label>
                 <div className="holding-number-grid">
                   <label>

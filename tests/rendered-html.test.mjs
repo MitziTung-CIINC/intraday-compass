@@ -62,6 +62,15 @@ test("includes the StopWatch hardware sync controls", async () => {
   assert.match(source, /readStopWatchSelection/);
 });
 
+test("describes convertible bonds as T+0 instruments", async () => {
+  const source = await readFile(
+    new URL("../app/MarketCopilot.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /T\+0 · 可转债及支持当日回转的ETF/);
+  assert.match(source, /可转债按T\+0处理/);
+});
+
 test("includes mature B/S popup, sound, and browser permission guidance", async () => {
   const source = await readFile(
     new URL("../app/MarketCopilot.tsx", import.meta.url),
