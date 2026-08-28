@@ -133,6 +133,7 @@ export function validateMiddaySnapshot(snapshot, expectedTradeDate) {
       Number.isFinite(item.professionalScore) &&
       item?.sync?.syncMode === "minute-path" &&
       item.sync.tradeDate === expectedTradeDate &&
+      item.sync.baselineTime === "09:30" &&
       item.sync.sampleCount >= MIN_MIDDAY_SAMPLE_COUNT &&
       Number.isFinite(item.sync.syncRate),
   );
@@ -591,7 +592,6 @@ async function fetchTrend(secid, label) {
     },
     label,
   );
-  const previousClose = asNumber(data.preClose);
   const points = (data.trends ?? [])
     .map((record) => {
       const fields = String(record).split(",");
@@ -601,7 +601,7 @@ async function fetchTrend(secid, label) {
       };
     })
     .filter((point) => point.time && point.close > 0);
-  return { previousClose, points };
+  return { points };
 }
 
 function fallbackSnapshotSync(bondChange, stockChange) {
@@ -623,41 +623,56 @@ function downsample(points, maximum = 72) {
   return sampled;
 }
 
-function compareMinutePaths(bondTrend, stockTrend, fallback) {
+export function compareMinutePaths(bondTrend, stockTrend, fallback) {
   const stockByTime = new Map(
     stockTrend.points.map((point) => [point.time, point.close]),
   );
-  const aligned = bondTrend.points
+  const rawAligned = bondTrend.points
     .filter((point) => stockByTime.has(point.time))
     .map((point) => {
-      const stockClose = stockByTime.get(point.time);
       return {
         time: point.time,
-        bondReturn:
-          ((point.close / (bondTrend.previousClose || fallback.bondPreviousClose)) - 1) *
-          100,
-        stockReturn:
-          ((stockClose / (stockTrend.previousClose || fallback.stockPreviousClose)) - 1) *
-          100,
+        bondClose: point.close,
+        stockClose: stockByTime.get(point.time),
       };
     })
     .filter(
       (point) =>
-        Number.isFinite(point.bondReturn) && Number.isFinite(point.stockReturn),
+        Number.isFinite(point.bondClose) && Number.isFinite(point.stockClose),
     );
+  const baselineIndex = rawAligned.findIndex(
+    (point) => point.time.slice(11, 16) === "09:30",
+  );
+  const baseline = rawAligned[baselineIndex];
+  const aligned = baseline
+    ? rawAligned.slice(baselineIndex).map((point) => ({
+        time: point.time,
+        bondReturn: ((point.bondClose / baseline.bondClose) - 1) * 100,
+        stockReturn: ((point.stockClose / baseline.stockClose) - 1) * 100,
+      }))
+    : [];
+  const latest = aligned.at(-1);
+  const timeline = downsample(aligned).map((point) => ({
+    time: point.time.slice(11, 16),
+    bondReturn: round(point.bondReturn, 3),
+    stockReturn: round(point.stockReturn, 3),
+  }));
 
   if (aligned.length < 20) {
     return {
       syncMode: "snapshot-proxy",
-      tradeDate: aligned.at(-1)?.time?.slice(0, 10) ?? null,
+      tradeDate: rawAligned.at(-1)?.time?.slice(0, 10) ?? null,
+      baselineTime: baseline?.time.slice(11, 16) ?? null,
       sampleCount: aligned.length,
       pathCorrelation: null,
       directionAgreement: null,
       syncRate: fallbackSnapshotSync(
-        fallback.bondChange,
-        fallback.stockChange,
+        latest?.bondReturn ?? fallback.bondChange,
+        latest?.stockReturn ?? fallback.stockChange,
       ),
-      timeline: downsample(aligned),
+      latestBondReturn: round(latest?.bondReturn),
+      latestStockReturn: round(latest?.stockReturn),
+      timeline,
     };
   }
 
@@ -679,15 +694,14 @@ function compareMinutePaths(bondTrend, stockTrend, fallback) {
   return {
     syncMode: "minute-path",
     tradeDate: aligned.at(-1)?.time?.slice(0, 10) ?? null,
+    baselineTime: baseline.time.slice(11, 16),
     sampleCount: aligned.length,
     pathCorrelation: round(correlation, 4),
     directionAgreement: round(directionAgreement, 4),
     syncRate: calculateSync(correlation, directionAgreement),
-    timeline: downsample(aligned).map((point) => ({
-      time: point.time.slice(11, 16),
-      bondReturn: round(point.bondReturn, 3),
-      stockReturn: round(point.stockReturn, 3),
-    })),
+    latestBondReturn: round(latest.bondReturn),
+    latestStockReturn: round(latest.stockReturn),
+    timeline,
   };
 }
 
@@ -707,8 +721,6 @@ function syncLabel(syncRate, bondChange, stockChange) {
 
 async function enrichCandidate(candidate) {
   const fallback = {
-    bondPreviousClose: candidate.bond.previousClose,
-    stockPreviousClose: candidate.stock.previousClose,
     bondChange: candidate.bond.changePct,
     stockChange: candidate.stock.changePct,
   };
@@ -725,6 +737,7 @@ async function enrichCandidate(candidate) {
     sync = {
       syncMode: "snapshot-proxy",
       tradeDate: null,
+      baselineTime: null,
       sampleCount: 0,
       pathCorrelation: null,
       directionAgreement: null,
@@ -732,11 +745,15 @@ async function enrichCandidate(candidate) {
         candidate.bond.changePct,
         candidate.stock.changePct,
       ),
+      latestBondReturn: null,
+      latestStockReturn: null,
       timeline: [],
     };
   }
+  const bondSyncReturn = sync.latestBondReturn ?? candidate.bond.changePct;
+  const stockSyncReturn = sync.latestStockReturn ?? candidate.stock.changePct;
   const divergencePct = round(
-    candidate.bond.changePct - candidate.stock.changePct,
+    bondSyncReturn - stockSyncReturn,
     2,
   );
   return {
@@ -745,8 +762,8 @@ async function enrichCandidate(candidate) {
       ...sync,
       label: syncLabel(
         sync.syncRate,
-        candidate.bond.changePct,
-        candidate.stock.changePct,
+        bondSyncReturn,
+        stockSyncReturn,
       ),
       divergencePct,
       relativeStrength:
@@ -899,7 +916,7 @@ export async function buildBondRadarSnapshot() {
     .sort()
     .at(-1);
   return {
-    version: 3,
+    version: 4,
     generatedAt: generatedAt.toISOString(),
     generatedAtChina: formatChinaTime(generatedAt),
     tradeDate: tradeDate || chinaDate,
@@ -911,14 +928,14 @@ export async function buildBondRadarSnapshot() {
     source: {
       provider: "东方财富公开行情",
       access: "公开延时行情",
-      baseline: "前一交易日收盘价",
+      baseline: "当日 9:30 第一根有效1分钟K线收盘价",
       notice: "公开行情可能延迟、限流或调整，不替代交易所或券商行情。",
     },
     methodology: {
       ranking:
         "专业评分 = 日内向上结构30% + 有效波动25% + 活跃度25% + 联动弹性20%；有效波动包含相对前收的跳空位移",
       sync:
-        "同步率 = 正向1分钟路径相关性×70% + 同向分钟占比×30%；均以前一交易日收盘价归一化",
+        "同步率 = 正向1分钟路径相关性×70% + 同向分钟占比×30%；股债均以各自当日9:30第一根有效1分钟K线收盘价归一化",
       liquidity: `默认剔除转债成交额低于${BOND_AMOUNT_FLOOR / 10_000}万元、正股成交额低于${STOCK_AMOUNT_FLOOR / 10_000}万元或正股带ST/退市风险标识的组合`,
       shortlist:
         `先统一要求正股有效波动不低于${MIN_STOCK_EFFECTIVE_MOVEMENT}%、股债同处向上结构且转债捕获比不低于${MIN_BOND_CAPTURE_RATIO}，再对前${SYNC_ENRICHMENT_POOL_SIZE}名计算分钟同步率并纯模型选出最多10组`,

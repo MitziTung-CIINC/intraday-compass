@@ -7,7 +7,7 @@ import BondRadarDashboard, {
 
 const title = "转债同步雷达｜向上联动 Top 10";
 const description =
-  "以上一交易日收盘价为基准，综合有效波动、量能、动量和联动弹性，筛选10组A股可转债与正股并比较分钟级同步率。";
+  "以当日9:30第一根有效1分钟K线收盘价为盘中路径基准，综合有效波动、量能、动量和联动弹性，筛选10组A股可转债与正股并比较分钟级同步率。";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();

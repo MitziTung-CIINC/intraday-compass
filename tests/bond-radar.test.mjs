@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   calculateSync,
   calculateVolatilityScore,
+  compareMinutePaths,
   effectiveMovement,
   effectiveRangePosition,
   evaluateTrendEligibility,
@@ -20,6 +21,31 @@ test("sync score rewards positive path correlation and direction agreement", () 
   assert.equal(calculateSync(1, 1), 100);
   assert.equal(calculateSync(-1, 0), 0);
   assert.equal(calculateSync(0.5, 0.5), 50);
+});
+
+test("minute paths normalize both securities from the common 09:30 close", () => {
+  const points = Array.from({ length: 20 }, (_, index) => ({
+    time: `2026-08-28 09:${String(30 + index).padStart(2, "0")}`,
+    close: 100 + index,
+  }));
+  const result = compareMinutePaths(
+    { points },
+    {
+      points: points.map((point, index) => ({ ...point, close: 200 + index * 2 })),
+    },
+    { bondChange: 99, stockChange: -99 },
+  );
+
+  assert.equal(result.syncMode, "minute-path");
+  assert.equal(result.baselineTime, "09:30");
+  assert.deepEqual(result.timeline[0], {
+    time: "09:30",
+    bondReturn: 0,
+    stockReturn: 0,
+  });
+  assert.equal(result.latestBondReturn, 19);
+  assert.equal(result.latestStockReturn, 19);
+  assert.equal(result.syncRate, 100);
 });
 
 test("volatility score uses the documented 55/45 weighting", () => {
@@ -88,6 +114,7 @@ test("midday publication requires today's complete 11:30 minute paths", () => {
         sync: {
           syncMode: "minute-path",
           tradeDate: "2026-08-27",
+          baselineTime: "09:30",
           sampleCount: 121,
           syncRate: 82,
         },

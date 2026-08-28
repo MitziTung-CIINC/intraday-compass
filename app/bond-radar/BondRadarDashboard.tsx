@@ -65,10 +65,13 @@ type RadarItem = {
   sync: {
     syncMode: "minute-path" | "snapshot-proxy";
     tradeDate: string | null;
+    baselineTime?: string | null;
     sampleCount: number;
     pathCorrelation: number | null;
     directionAgreement: number | null;
     syncRate: number;
+    latestBondReturn?: number | null;
+    latestStockReturn?: number | null;
     timeline: TimelinePoint[];
     label: string;
     divergencePct: number;
@@ -196,9 +199,9 @@ function PairChart({ item }: { item: RadarItem }) {
         className={styles.chart}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label={`${item.bond.name}与${item.stock.name}相对前收的分钟收益路径`}
+        aria-label={`${item.bond.name}与${item.stock.name}相对9:30基准的分钟收益路径`}
       >
-        <title>{`${item.bond.name}与${item.stock.name}相对前收的分钟收益路径`}</title>
+        <title>{`${item.bond.name}与${item.stock.name}相对9:30基准的分钟收益路径`}</title>
         {ticks.map((tick) => (
           <g key={tick}>
             <line
@@ -245,8 +248,10 @@ function PairChart({ item }: { item: RadarItem }) {
 }
 
 function Reading({ item }: { item: RadarItem }) {
+  const bondReturn = item.sync.latestBondReturn ?? item.bond.changePct;
+  const stockReturn = item.sync.latestStockReturn ?? item.stock.changePct;
   const sameDirection =
-    Math.sign(item.bond.changePct) === Math.sign(item.stock.changePct);
+    Math.sign(bondReturn) === Math.sign(stockReturn);
   const text = sameDirection
     ? `两者当前同向，${item.sync.relativeStrength}，收益差为 ${signed(item.sync.divergencePct)}。`
     : `转债与正股当前反向，收益差达到 ${signed(item.sync.divergencePct)}，属于优先复核的背离组合。`;
@@ -363,7 +368,7 @@ export default function BondRadarDashboard({
             </div>
             <h1>捕捉波动，也看清谁在跟随</h1>
             <p>
-              以前一交易日收盘价为统一基准，先检查正股有效波动与股债日内向上结构，再评估转债弹性、量能和分钟同步率，纯模型保留最多 10 组。
+              以当日 9:30 第一根有效1分钟K线收盘价为盘中路径基准，先检查正股有效波动与股债日内向上结构，再评估转债弹性、量能和分钟同步率，纯模型保留最多 10 组。
             </p>
           </div>
           <div className={styles.snapshotMeta}>
@@ -402,7 +407,7 @@ export default function BondRadarDashboard({
           <article className={styles.chartPanel}>
             <div className={styles.panelHeader}>
               <div>
-                <span className={styles.sectionLabel}>选中组合 · 相对前收路径</span>
+                <span className={styles.sectionLabel}>选中组合 · 相对9:30路径</span>
                 <h2>{selected.bond.name} <em>×</em> {selected.stock.name}</h2>
               </div>
               <div className={styles.legend}>
