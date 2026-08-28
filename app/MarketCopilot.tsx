@@ -2257,6 +2257,14 @@ export default function MarketCopilot() {
         <span>不连接证券账户，不读取资金，不具备下单能力</span>
         <span className="feed-message">{feedMessage}</span>
       </div>
+      <section className="risk-disclosure" aria-label="风险提示与开源声明">
+        <strong>风险提示与开源声明</strong>
+        <p>
+          本项目为免费开源的行情分析与日内 T+0 决策辅助工具，代码及模型按“现状”提供，不对准确性、完整性、适用性或盈利结果作任何明示或默示保证。页面展示的 B/S
+          信号、成熟度评分、回测结果及其他模型输出仅供学习、研究与辅助参考，不构成投资建议、收益承诺或交易指令。证券、ETF
+          及可转债交易具有风险，模型可能受行情延迟、数据误差、极端波动及交易规则变化影响。使用者应独立判断、审慎决策，并自行承担因使用本项目及相关信息产生的全部交易风险与损失。本项目不连接券商账户、不代替人工决策、不执行自动交易。
+        </p>
+      </section>
       <div className="provenance-strip">
         <span className={`session-chip ${marketStatus.kind}`}>
           {marketStatus.label}

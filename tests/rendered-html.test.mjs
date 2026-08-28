@@ -48,6 +48,9 @@ test("server-renders the market copilot shell", async () => {
   assert.match(html, /申万一级行业分钟序列/);
   assert.match(html, /大盘波浪 · 个股空仓指引/);
   assert.match(html, /成功率Agent/);
+  assert.match(html, /风险提示与开源声明/);
+  assert.match(html, /不构成投资建议、收益承诺或交易指令/);
+  assert.match(html, /自行承担因使用本项目及相关信息产生的全部交易风险与损失/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 

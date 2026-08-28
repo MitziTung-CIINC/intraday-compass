@@ -176,6 +176,29 @@ button {
   margin-left: auto;
 }
 
+.risk-disclosure {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-bottom: 1px solid #efb4ab;
+  border-left: 5px solid #cf3f36;
+  background: #fff3f0;
+  padding: 11px 24px 11px 19px;
+  color: #6f302b;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.risk-disclosure strong {
+  flex: 0 0 auto;
+  color: #a62922;
+  font-size: 13px;
+}
+
+.risk-disclosure p {
+  margin: 0;
+}
+
 .provenance-strip {
   display: flex;
   min-height: 38px;
@@ -2149,6 +2172,16 @@ textarea:focus {
     align-items: flex-start;
     flex-wrap: wrap;
     padding: 8px 14px;
+  }
+
+  .risk-disclosure {
+    display: block;
+    padding: 10px 14px 10px 11px;
+  }
+
+  .risk-disclosure strong {
+    display: block;
+    margin-bottom: 4px;
   }
 
   .provenance-strip {
