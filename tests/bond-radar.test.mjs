@@ -5,6 +5,7 @@ import {
   calculateSync,
   calculateVolatilityScore,
   compareMinutePaths,
+  determineSyncConfidence,
   effectiveMovement,
   effectiveRangePosition,
   evaluateTrendEligibility,
@@ -46,6 +47,18 @@ test("minute paths normalize both securities from the common 09:30 close", () =>
   assert.equal(result.latestBondReturn, 19);
   assert.equal(result.latestStockReturn, 19);
   assert.equal(result.syncRate, 100);
+  assert.equal(result.activeSampleCount, 19);
+  assert.equal(result.leadLagMinutes, 0);
+  assert.equal(result.rollingConsistency, 1);
+  assert.equal(result.confidenceLevel, "observation");
+});
+
+test("sync confidence separates preview, observation and confirmation stages", () => {
+  assert.equal(determineSyncConfidence(4, 4).level, "insufficient");
+  assert.equal(determineSyncConfidence(5, 4).level, "preview");
+  assert.equal(determineSyncConfidence(15, 8).level, "observation");
+  assert.equal(determineSyncConfidence(30, 15).level, "confirmed");
+  assert.equal(determineSyncConfidence(60, 30).level, "stable");
 });
 
 test("volatility score uses the documented 55/45 weighting", () => {
@@ -116,6 +129,8 @@ test("midday publication requires today's complete 11:30 minute paths", () => {
           tradeDate: "2026-08-27",
           baselineTime: "09:30",
           sampleCount: 121,
+          activeSampleCount: 70,
+          confidenceLevel: "stable",
           syncRate: 82,
         },
       },

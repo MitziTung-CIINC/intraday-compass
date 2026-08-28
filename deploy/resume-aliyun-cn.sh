@@ -37,8 +37,10 @@ run_logged install -m 0644 "${DEPLOY_DIR}/deploy/nginx-00t00.conf" /etc/nginx/si
 run_logged ln -sfn /etc/nginx/sites-available/00t00.com /etc/nginx/sites-enabled/00t00.com
 
 run_logged systemctl daemon-reload
-run_logged systemctl enable --now intraday-compass-quote.service
-run_logged systemctl enable --now intraday-compass-web.service
+run_logged systemctl enable intraday-compass-quote.service
+run_logged systemctl enable intraday-compass-web.service
+run_logged systemctl restart intraday-compass-quote.service
+run_logged systemctl restart intraday-compass-web.service
 run_logged systemctl enable --now intraday-compass-bond-radar.timer
 run_logged nginx -t
 run_logged systemctl reload nginx

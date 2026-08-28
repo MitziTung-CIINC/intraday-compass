@@ -65,12 +65,34 @@ export function pearsonCorrelation(left, right) {
   return denominator > 0 ? clamp(numerator / denominator, -1, 1) : null;
 }
 
-export function calculateSync(correlation, directionAgreement) {
+export function calculateSync(
+  correlation,
+  directionAgreement,
+  rollingConsistency = directionAgreement,
+) {
   const direction = clamp(directionAgreement ?? 0);
+  const rolling = clamp(rollingConsistency ?? 0);
   const positivePathCorrelation = Math.max(0, correlation ?? 0);
   return Math.round(
-    100 * (positivePathCorrelation * 0.7 + direction * 0.3),
+    100 *
+      (positivePathCorrelation * 0.5 + direction * 0.3 + rolling * 0.2),
   );
+}
+
+export function determineSyncConfidence(sampleCount, activeSampleCount) {
+  if (sampleCount < 5) {
+    return { level: "insufficient", label: "样本不足", scoreWeight: 0 };
+  }
+  if (sampleCount < 15 || activeSampleCount < 8) {
+    return { level: "preview", label: "早盘预览", scoreWeight: 0.25 };
+  }
+  if (sampleCount < 30 || activeSampleCount < 15) {
+    return { level: "observation", label: "初步观察", scoreWeight: 0.5 };
+  }
+  if (sampleCount < 60 || activeSampleCount < 30) {
+    return { level: "confirmed", label: "正式确认", scoreWeight: 1 };
+  }
+  return { level: "stable", label: "高置信确认", scoreWeight: 1 };
 }
 
 export function calculateVolatilityScore(bondAmplitude, stockAmplitude) {
@@ -135,6 +157,8 @@ export function validateMiddaySnapshot(snapshot, expectedTradeDate) {
       item.sync.tradeDate === expectedTradeDate &&
       item.sync.baselineTime === "09:30" &&
       item.sync.sampleCount >= MIN_MIDDAY_SAMPLE_COUNT &&
+      Number.isFinite(item.sync.activeSampleCount) &&
+      ["confirmed", "stable"].includes(item.sync.confidenceLevel) &&
       Number.isFinite(item.sync.syncRate),
   );
   if (!complete) {
@@ -623,6 +647,45 @@ function downsample(points, maximum = 72) {
   return sampled;
 }
 
+function bestLaggedCorrelation(bondReturns, stockReturns, maxLag = 2) {
+  let best = { correlation: null, lagMinutes: 0 };
+  const lags = Array.from({ length: maxLag * 2 + 1 }, (_, index) => index - maxLag)
+    .sort((left, right) => Math.abs(left) - Math.abs(right));
+  for (const lag of lags) {
+    const shift = Math.abs(lag);
+    const bond = lag >= 0
+      ? bondReturns.slice(shift)
+      : bondReturns.slice(0, -shift || undefined);
+    const stock = lag >= 0
+      ? stockReturns.slice(0, -shift || undefined)
+      : stockReturns.slice(shift);
+    const correlation = pearsonCorrelation(bond, stock);
+    if (
+      correlation !== null &&
+      (best.correlation === null || correlation > best.correlation)
+    ) {
+      best = { correlation, lagMinutes: lag };
+    }
+  }
+  return best;
+}
+
+function rollingConsistency(bondReturns, stockReturns) {
+  const correlations = [10, 20, 30]
+    .filter((window) => bondReturns.length >= window)
+    .map((window) =>
+      bestLaggedCorrelation(
+        bondReturns.slice(-window),
+        stockReturns.slice(-window),
+      ).correlation,
+    )
+    .filter(Number.isFinite)
+    .map((correlation) => Math.max(0, correlation));
+  return correlations.length
+    ? correlations.reduce((sum, value) => sum + value, 0) / correlations.length
+    : 0;
+}
+
 export function compareMinutePaths(bondTrend, stockTrend, fallback) {
   const stockByTime = new Map(
     stockTrend.points.map((point) => [point.time, point.close]),
@@ -652,13 +715,28 @@ export function compareMinutePaths(bondTrend, stockTrend, fallback) {
       }))
     : [];
   const latest = aligned.at(-1);
+  const increments = baseline
+    ? rawAligned.slice(baselineIndex + 1).map((point, index) => {
+        const previous = rawAligned[baselineIndex + index];
+        return {
+          bondReturn: ((point.bondClose / previous.bondClose) - 1) * 100,
+          stockReturn: ((point.stockClose / previous.stockClose) - 1) * 100,
+        };
+      })
+    : [];
+  const bondIncrements = increments.map((point) => point.bondReturn);
+  const stockIncrements = increments.map((point) => point.stockReturn);
+  const active = increments.filter(
+    (point) => Math.abs(point.bondReturn) + Math.abs(point.stockReturn) >= 0.08,
+  );
+  const confidence = determineSyncConfidence(aligned.length, active.length);
   const timeline = downsample(aligned).map((point) => ({
     time: point.time.slice(11, 16),
     bondReturn: round(point.bondReturn, 3),
     stockReturn: round(point.stockReturn, 3),
   }));
 
-  if (aligned.length < 20) {
+  if (aligned.length < 5) {
     return {
       syncMode: "snapshot-proxy",
       tradeDate: rawAligned.at(-1)?.time?.slice(0, 10) ?? null,
@@ -672,17 +750,19 @@ export function compareMinutePaths(bondTrend, stockTrend, fallback) {
       ),
       latestBondReturn: round(latest?.bondReturn),
       latestStockReturn: round(latest?.stockReturn),
+      activeSampleCount: active.length,
+      rollingConsistency: null,
+      zeroLagCorrelation: null,
+      leadLagMinutes: null,
+      confidenceLevel: confidence.level,
+      confidenceLabel: confidence.label,
+      confidenceWeight: confidence.scoreWeight,
       timeline,
     };
   }
 
-  const correlation = pearsonCorrelation(
-    aligned.map((point) => point.bondReturn),
-    aligned.map((point) => point.stockReturn),
-  );
-  const active = aligned.filter(
-    (point) => Math.abs(point.bondReturn) + Math.abs(point.stockReturn) >= 0.08,
-  );
+  const zeroLagCorrelation = pearsonCorrelation(bondIncrements, stockIncrements);
+  const lagged = bestLaggedCorrelation(bondIncrements, stockIncrements);
   const directionAgreement = active.length
     ? active.filter(
         (point) =>
@@ -691,16 +771,28 @@ export function compareMinutePaths(bondTrend, stockTrend, fallback) {
           Math.abs(point.stockReturn) < 0.04,
       ).length / active.length
     : 0;
+  const consistency = rollingConsistency(bondIncrements, stockIncrements);
   return {
     syncMode: "minute-path",
     tradeDate: aligned.at(-1)?.time?.slice(0, 10) ?? null,
     baselineTime: baseline.time.slice(11, 16),
     sampleCount: aligned.length,
-    pathCorrelation: round(correlation, 4),
+    pathCorrelation: round(lagged.correlation, 4),
+    zeroLagCorrelation: round(zeroLagCorrelation, 4),
+    leadLagMinutes: lagged.lagMinutes,
     directionAgreement: round(directionAgreement, 4),
-    syncRate: calculateSync(correlation, directionAgreement),
+    activeSampleCount: active.length,
+    rollingConsistency: round(consistency, 4),
+    syncRate: calculateSync(
+      lagged.correlation,
+      directionAgreement,
+      consistency,
+    ),
     latestBondReturn: round(latest.bondReturn),
     latestStockReturn: round(latest.stockReturn),
+    confidenceLevel: confidence.level,
+    confidenceLabel: confidence.label,
+    confidenceWeight: confidence.scoreWeight,
     timeline,
   };
 }
@@ -747,6 +839,13 @@ async function enrichCandidate(candidate) {
       ),
       latestBondReturn: null,
       latestStockReturn: null,
+      activeSampleCount: 0,
+      rollingConsistency: null,
+      zeroLagCorrelation: null,
+      leadLagMinutes: null,
+      confidenceLevel: "insufficient",
+      confidenceLabel: "样本不足",
+      confidenceWeight: 0,
       timeline: [],
     };
   }
@@ -872,8 +971,9 @@ export async function buildBondRadarSnapshot() {
     .map((candidate) => ({
       ...candidate,
       professionalScore: round(
-        candidate.factors.preliminaryScore * 0.82 +
-          candidate.sync.syncRate * 0.18,
+        candidate.factors.preliminaryScore *
+          (1 - 0.18 * candidate.sync.confidenceWeight) +
+          candidate.sync.syncRate * 0.18 * candidate.sync.confidenceWeight,
         2,
       ),
     }))
@@ -916,7 +1016,7 @@ export async function buildBondRadarSnapshot() {
     .sort()
     .at(-1);
   return {
-    version: 4,
+    version: 5,
     generatedAt: generatedAt.toISOString(),
     generatedAtChina: formatChinaTime(generatedAt),
     tradeDate: tradeDate || chinaDate,
@@ -935,7 +1035,7 @@ export async function buildBondRadarSnapshot() {
       ranking:
         "专业评分 = 日内向上结构30% + 有效波动25% + 活跃度25% + 联动弹性20%；有效波动包含相对前收的跳空位移",
       sync:
-        "同步率 = 正向1分钟路径相关性×70% + 同向分钟占比×30%；股债均以各自当日9:30第一根有效1分钟K线收盘价归一化",
+        "同步率 = ±2分钟增量收益相关性×50% + 活跃分钟同向占比×30% + 10/20/30分钟滚动一致性×20%；9:30基准仅用于图表和盘中收益差",
       liquidity: `默认剔除转债成交额低于${BOND_AMOUNT_FLOOR / 10_000}万元、正股成交额低于${STOCK_AMOUNT_FLOOR / 10_000}万元或正股带ST/退市风险标识的组合`,
       shortlist:
         `先统一要求正股有效波动不低于${MIN_STOCK_EFFECTIVE_MOVEMENT}%、股债同处向上结构且转债捕获比不低于${MIN_BOND_CAPTURE_RATIO}，再对前${SYNC_ENRICHMENT_POOL_SIZE}名计算分钟同步率并纯模型选出最多10组`,

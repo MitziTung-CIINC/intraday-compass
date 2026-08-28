@@ -108,6 +108,10 @@ test("server-renders the convertible-bond synchronization radar", async () => {
   assert.match(html, /向上联动 Top 10/);
   assert.match(html, /分钟同步率/);
   assert.match(html, /当日 9:30 第一根有效1分钟K线收盘价/);
+  assert.match(html, /先捕捉，再确认/);
+  assert.match(html, /09:35.*后/s);
+  assert.match(html, /5分钟仅用于候选预览/);
+  assert.match(html, /读取最新快照/);
   assert.match(html, /纯模型入选/);
   assert.doesNotMatch(html, /人工先验|模型外补位/);
   assert.match(html, /只读 · 不连接证券账户/);

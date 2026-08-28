@@ -5,6 +5,7 @@ import http from "node:http";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { buildBondRadarSnapshot } from "./update-bond-radar.mjs";
 
 const PROJECT_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const execFileAsync = promisify(execFile);
@@ -46,6 +47,9 @@ const LATEST_MAX_AGE_MS = Number(process.env.T0_LATEST_MAX_AGE_MS || 15000);
 const PRICE_TOLERANCE_PCT = Number(
   process.env.EASTMONEY_PRICE_TOLERANCE_PCT || 1,
 );
+const BOND_RADAR_REFRESH_MS = Number(
+  process.env.BOND_RADAR_REFRESH_MS || 15_000,
+);
 const EASTMONEY_QUOTE_URL =
   process.env.EASTMONEY_QUOTE_URL ||
   "https://push2his.eastmoney.com/api/qt/stock/get?invt=2&fltt=1&secid={secid}&fields=f43,f44,f45,f46,f47,f48,f50,f57,f58,f59,f60,f86,f127,f128,f129,f169,f170";
@@ -65,6 +69,28 @@ const dailyCache = new Map();
 const comparisonCache = new Map();
 const lastCumulativeVolume = new Map();
 let boardMapCache = null;
+let bondRadarCache = null;
+let bondRadarBuild = null;
+
+async function getBondRadarSnapshot() {
+  if (
+    bondRadarCache &&
+    Date.now() - bondRadarCache.savedAt < BOND_RADAR_REFRESH_MS
+  ) {
+    return bondRadarCache.snapshot;
+  }
+  if (!bondRadarBuild) {
+    bondRadarBuild = buildBondRadarSnapshot()
+      .then((snapshot) => {
+        bondRadarCache = { savedAt: Date.now(), snapshot };
+        return snapshot;
+      })
+      .finally(() => {
+        bondRadarBuild = null;
+      });
+  }
+  return bondRadarBuild;
+}
 
 function normalizeCode(raw) {
   const code = String(raw || "").replace(/\D/g, "");
@@ -740,7 +766,7 @@ const server = http.createServer(async (request, response) => {
   if (request.method === "OPTIONS") {
     response.writeHead(204, {
       "Access-Control-Allow-Headers": "Authorization",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Origin": allowedOrigin(request),
     });
     response.end();
@@ -766,6 +792,7 @@ const server = http.createServer(async (request, response) => {
       apiKeyRequired: false,
       mode: "official-price-with-official-minute-validation",
       recommendedPollMs: 1000,
+      bondRadarRefreshMs: BOND_RADAR_REFRESH_MS,
       contextRefreshMs: CONTEXT_REFRESH_MS,
       dailyRefreshMs: DAILY_REFRESH_MS,
       mappingRefreshMs: MAPPING_REFRESH_MS,
@@ -775,6 +802,27 @@ const server = http.createServer(async (request, response) => {
         maxPriceDivergencePct: PRICE_TOLERANCE_PCT,
       },
     });
+    return;
+  }
+  if (url.pathname === "/bond-radar") {
+    if (request.method !== "POST") {
+      sendJson(request, response, 405, {
+        ok: false,
+        error: "method not allowed",
+      });
+      return;
+    }
+    try {
+      sendJson(request, response, 200, await getBondRadarSnapshot());
+    } catch (error) {
+      sendJson(request, response, 502, {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "bond radar refresh failed",
+      });
+    }
     return;
   }
   if (url.pathname !== "/quote") {

@@ -72,6 +72,13 @@ type RadarItem = {
     syncRate: number;
     latestBondReturn?: number | null;
     latestStockReturn?: number | null;
+    activeSampleCount?: number;
+    rollingConsistency?: number | null;
+    zeroLagCorrelation?: number | null;
+    leadLagMinutes?: number | null;
+    confidenceLevel?: "insufficient" | "preview" | "observation" | "confirmed" | "stable";
+    confidenceLabel?: string;
+    confidenceWeight?: number;
     timeline: TimelinePoint[];
     label: string;
     divergencePct: number;
@@ -111,6 +118,26 @@ export type BondRadarSnapshot = {
 };
 
 type SortMode = "professional" | "sync" | "divergence";
+
+const refreshStages = [
+  { time: "09:35", samples: 5, title: "早盘预览", detail: "只生成候选 Top 10，不视为确认。" },
+  { time: "09:45", samples: 15, title: "初步观察", detail: "至少8个活跃分钟，开始观察跟随关系。" },
+  { time: "10:00", samples: 30, title: "正式确认", detail: "至少15个活跃分钟，检查滚动稳定性。" },
+  { time: "10:30", samples: 60, title: "高置信确认", detail: "覆盖更多波动阶段，适合复核稳定同步。" },
+];
+
+function confidenceStage(sampleCount: number, activeSampleCount: number) {
+  if (sampleCount < 5) return -1;
+  if (sampleCount < 15 || activeSampleCount < 8) return 0;
+  if (sampleCount < 30 || activeSampleCount < 15) return 1;
+  if (sampleCount < 60 || activeSampleCount < 30) return 2;
+  return 3;
+}
+
+function leadLagLabel(minutes: number | null | undefined) {
+  if (!minutes) return "同分钟";
+  return minutes > 0 ? `正股领先${minutes}分` : `转债领先${Math.abs(minutes)}分`;
+}
 
 function signed(value: number, digits = 2) {
   return `${value > 0 ? "+" : ""}${value.toFixed(digits)}%`;
@@ -298,6 +325,19 @@ export default function BondRadarDashboard({
     );
   }, [snapshot.items, sortMode]);
   const medianSync = median(snapshot.items.map((item) => item.sync.syncRate));
+  const minimumSamples = Math.min(
+    ...snapshot.items.map((item) => item.sync.sampleCount),
+  );
+  const minimumActiveSamples = Math.min(
+    ...snapshot.items.map(
+      (item) => item.sync.activeSampleCount ?? item.sync.sampleCount,
+    ),
+  );
+  const currentStage = confidenceStage(minimumSamples, minimumActiveSamples);
+  const nextStage = refreshStages[currentStage + 1];
+  const refreshHint = nextStage
+    ? `建议 ${nextStage.time} 后再次点击“读取最新快照”，进入${nextStage.title}。`
+    : "已达到高置信样本门槛；盘中出现明显波动后可再次读取最新快照。";
   const largestDivergence = snapshot.items.reduce(
     (largest, item) =>
       Math.abs(item.sync.divergencePct) > Math.abs(largest.sync.divergencePct)
@@ -310,17 +350,25 @@ export default function BondRadarDashboard({
     setRefreshing(true);
     setRefreshError("");
     try {
-      const response = await fetch(`/data/bond-radar.json?t=${Date.now()}`, {
+      const response = await fetch("/api/bond-radar", {
+        method: "POST",
         cache: "no-store",
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(payload?.error || `HTTP ${response.status}`);
+      }
       const nextSnapshot = (await response.json()) as BondRadarSnapshot;
       setSnapshot(nextSnapshot);
       if (!nextSnapshot.items.some((item) => item.bond.code === selectedCode)) {
         setSelectedCode(nextSnapshot.items[0]?.bond.code ?? "");
       }
-    } catch {
-      setRefreshError("快照读取失败，仍保留当前数据");
+    } catch (error) {
+      setRefreshError(
+        `${error instanceof Error ? error.message : "快照读取失败"}，仍保留当前数据`,
+      );
     } finally {
       setRefreshing(false);
     }
@@ -354,7 +402,7 @@ export default function BondRadarDashboard({
             onClick={refreshSnapshot}
             type="button"
           >
-            {refreshing ? "读取中…" : "读取最新快照"}
+            {refreshing ? "全市场扫描中…" : "读取最新快照"}
           </button>
         </div>
       </header>
@@ -380,6 +428,47 @@ export default function BondRadarDashboard({
 
         {refreshError ? <div className={styles.errorBar}>{refreshError}</div> : null}
 
+        <section className={styles.refreshGuide} aria-label="同步率确认与刷新节奏">
+          <div className={styles.refreshGuideHeader}>
+            <div>
+              <span className={styles.sectionLabel}>刷新节奏</span>
+              <h2>先捕捉，再确认</h2>
+            </div>
+            <div className={styles.currentStage}>
+              <span>当前最少有效样本</span>
+              <strong>{minimumSamples} 分钟</strong>
+              <small>{currentStage >= 0 ? refreshStages[currentStage].title : "等待开盘样本"}</small>
+            </div>
+          </div>
+          <div className={styles.refreshStages}>
+            {refreshStages.map((stage, index) => (
+              <article
+                className={
+                  index === currentStage
+                    ? styles.stageCurrent
+                    : index < currentStage
+                      ? styles.stageComplete
+                      : ""
+                }
+                key={stage.time}
+              >
+                <span>{stage.time} 后</span>
+                <strong>{stage.title}</strong>
+                <p>{stage.samples}个有效对齐分钟。{stage.detail}</p>
+              </article>
+            ))}
+          </div>
+          <div className={styles.refreshCallout}>
+            <p>{refreshHint}</p>
+            <button disabled={refreshing} onClick={refreshSnapshot} type="button">
+              {refreshing ? "正在重新计算 Top 10…" : "读取最新快照"}
+            </button>
+          </div>
+          <small className={styles.refreshBoundary}>
+            5分钟仅用于候选预览；同步率使用逐分钟增量收益、±2分钟滞后、活跃分钟同向占比和滚动一致性。公开行情可能延迟，结果仅作研究辅助。
+          </small>
+        </section>
+
         <section className={styles.stats} aria-label="筛选概览">
           <article>
             <span>通过结构门槛</span>
@@ -394,7 +483,7 @@ export default function BondRadarDashboard({
           <article>
             <span>Top 10 同步率中位数</span>
             <strong>{medianSync}%</strong>
-            <small>分钟路径 + 同向分钟</small>
+            <small>{currentStage >= 0 ? refreshStages[currentStage].title : "样本不足"} · 增量收益</small>
           </article>
           <article>
             <span>最大收益偏离</span>
@@ -433,7 +522,7 @@ export default function BondRadarDashboard({
             </div>
             <dl className={styles.signalFacts}>
               <div>
-                <dt>路径相关性</dt>
+                <dt>增量相关性</dt>
                 <dd>{selected.sync.pathCorrelation === null ? "代理口径" : signed(selected.sync.pathCorrelation * 100, 0)}</dd>
               </div>
               <div>
@@ -447,6 +536,14 @@ export default function BondRadarDashboard({
               <div>
                 <dt>收益差</dt>
                 <dd className={changeClass(selected.sync.divergencePct)}>{signed(selected.sync.divergencePct)}</dd>
+              </div>
+              <div>
+                <dt>活跃分钟</dt>
+                <dd>{selected.sync.activeSampleCount ?? "--"}</dd>
+              </div>
+              <div>
+                <dt>领先关系</dt>
+                <dd>{leadLagLabel(selected.sync.leadLagMinutes)}</dd>
               </div>
             </dl>
             <div className={styles.pairQuote}>
@@ -463,8 +560,10 @@ export default function BondRadarDashboard({
             </div>
             <Reading item={selected} />
             <div className={styles.criteriaNote}>
-              <span>纯模型入选 · 日内向上结构已确认</span>
+              <span>纯模型入选 · {selected.sync.confidenceLabel ?? "历史快照"}</span>
               <p>
+                已对齐 {selected.sync.sampleCount} 分钟，活跃分钟 {selected.sync.activeSampleCount ?? "--"}；
+                滚动一致性 {selected.sync.rollingConsistency == null ? "--" : signed(selected.sync.rollingConsistency * 100, 0)}。<br />
                 正股位于有效区间 {(selected.eligibility?.stockRangePosition ?? selected.factors.stockRangePosition ?? 0).toFixed(0)}% 位置，
                 转债跟随捕获比 {(selected.eligibility?.captureRatio ?? selected.factors.captureRatio ?? 0).toFixed(2)}。
               </p>
@@ -562,7 +661,7 @@ export default function BondRadarDashboard({
                         <div><span style={{ width: `${item.sync.syncRate}%` }} /></div>
                         <strong>{item.sync.syncRate}%</strong>
                       </div>
-                      <small className={styles.syncText}>{item.sync.label}</small>
+                      <small className={styles.syncText}>{item.sync.label} · {item.sync.confidenceLabel ?? "历史快照"}</small>
                     </td>
                     <td>
                       <strong className={changeClass(item.sync.divergencePct)}>{signed(item.sync.divergencePct)}</strong>
