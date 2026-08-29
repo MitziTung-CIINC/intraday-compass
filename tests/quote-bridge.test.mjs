@@ -425,7 +425,7 @@ test("history endpoint returns only the previous trading session from real minut
       return;
     }
     if (url.pathname === "/kline") {
-      sendJson(response, dailyPayload(1460));
+      sendJson(response, { data: { klines: [] } });
       return;
     }
     if (url.pathname === "/boards") {
@@ -466,4 +466,7 @@ test("history endpoint returns only the previous trading session from real minut
   );
   assert.ok(history.data.minuteBars.every((bar) => Number.isFinite(bar.indexChange)));
   assert.ok(history.data.minuteBars.every((bar) => Number.isFinite(bar.sectorChange)));
+  assert.deepEqual(history.data.dailyBars, []);
+  assert.equal(history.data.context.dailySeriesValid, false);
+  assert.match(history.data.context.dailyError, /公开日 K 不可用/);
 });

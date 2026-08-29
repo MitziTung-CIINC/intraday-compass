@@ -816,7 +816,14 @@ async function getPreviousTradingSession(code, market) {
   } catch (error) {
     comparisonError = error instanceof Error ? error.message : "行业分钟线不可用";
   }
-  const daily = await getDailyBars(code, market);
+  let daily = { bars: [] };
+  let dailyError = null;
+  try {
+    daily = await getDailyBars(code, market);
+  } catch (error) {
+    dailyError =
+      error instanceof Error ? error.message : "东方财富公开日 K 不可用";
+  }
   const bars = enrichMinuteBars(instrument, index, comparison);
   return {
     ok: true,
@@ -844,6 +851,7 @@ async function getPreviousTradingSession(code, market) {
         sectorSeriesValid: bars.some((bar) => Number.isFinite(bar.sectorChange)),
         sectorError: comparisonError,
         dailySeriesValid: daily.bars.length >= 20,
+        dailyError,
         error: null,
       },
     },
