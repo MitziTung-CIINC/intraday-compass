@@ -10,6 +10,15 @@ function shanghaiNow() {
     .replace("T", " ");
 }
 
+function shanghaiDay(offset = 0) {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(Date.now() + offset * 24 * 60 * 60 * 1000));
+}
+
 function snapshot({
   code,
   name,
@@ -42,6 +51,27 @@ function trendPayload(name, previousClose, time, close) {
       preClose: previousClose,
       trends: [
         `${time},${close - 1},${close},${close + 1},${close - 2},2400,3600000,${close - 0.2}`,
+      ],
+    },
+  };
+}
+
+function historicalTrendPayload(name, earlierClose, replayCloses, currentClose) {
+  const earlier = shanghaiDay(-2);
+  const replay = shanghaiDay(-1);
+  const current = shanghaiDay();
+  const row = (date, time, close) =>
+    `${date} ${time},${close},${close},${close},${close},100,${close * 10000},${close}`;
+  return {
+    data: {
+      name,
+      preClose: replayCloses.at(-1),
+      trends: [
+        row(earlier, "15:00", earlierClose),
+        ...replayCloses.map((close, index) =>
+          row(replay, index === 0 ? "09:30" : "15:00", close),
+        ),
+        row(current, "09:30", currentClose),
       ],
     },
   };
@@ -336,4 +366,86 @@ test("tracks an ETF with free Eastmoney quote, minute and daily data", async (co
   assert.equal(quote.data.dailyBars.length, 25);
   assert.equal(quote.meta.dailyApi, "eastmoney-official-kline");
   assert.equal(quote.meta.quoteSource, "eastmoney-official-snapshot");
+});
+
+test("history endpoint returns only the previous trading session from real minute rows", async (context) => {
+  const bridgePort = 19500 + (process.pid % 200);
+  const upstreamPort = bridgePort + 1000;
+  const upstream = http.createServer((request, response) => {
+    const url = new URL(request.url, `http://127.0.0.1:${upstreamPort}`);
+    if (url.pathname === "/quote") {
+      const secid = url.searchParams.get("secid");
+      sendJson(
+        response,
+        secid === "1.600519"
+          ? snapshot({
+              code: "600519",
+              name: "贵州茅台",
+              price: 1504,
+              previousClose: 1502,
+              industry: "白酒Ⅱ",
+            })
+          : snapshot({
+              code: "000001",
+              name: "上证指数",
+              price: 3602,
+              previousClose: 3600,
+            }),
+      );
+      return;
+    }
+    if (url.pathname === "/trends") {
+      assert.equal(url.searchParams.get("ndays"), "5");
+      const secid = url.searchParams.get("secid");
+      if (secid === "1.600519") {
+        sendJson(response, historicalTrendPayload("贵州茅台", 1490, [1495, 1502], 1504));
+      } else if (secid === "90.BK1277") {
+        sendJson(response, historicalTrendPayload("白酒Ⅱ", 5100, [5120, 5140], 5150));
+      } else {
+        sendJson(response, historicalTrendPayload("上证指数", 3580, [3590, 3600], 3602));
+      }
+      return;
+    }
+    if (url.pathname === "/kline") {
+      sendJson(response, dailyPayload(1460));
+      return;
+    }
+    if (url.pathname === "/boards") {
+      sendJson(response, {
+        data: {
+          diff:
+            url.searchParams.get("page") === "1"
+              ? [{ f12: "BK1277", f14: "白酒Ⅱ" }]
+              : [],
+        },
+      });
+      return;
+    }
+    assert.fail(`unexpected upstream path ${url.pathname}`);
+  });
+  await listen(upstream, upstreamPort);
+  context.after(() => upstream.close());
+
+  const child = spawn(process.execPath, ["tools/realtime_quote_bridge.mjs"], {
+    env: bridgeEnvironment(bridgePort, upstreamPort),
+    stdio: "ignore",
+  });
+  context.after(() => child.kill());
+  await waitForBridge(bridgePort);
+
+  const history = await (
+    await fetch(
+      `http://127.0.0.1:${bridgePort}/history?symbol=600519&market=SH`,
+    )
+  ).json();
+  assert.equal(history.ok, true, JSON.stringify(history));
+  assert.equal(history.meta.realHistorical, true);
+  assert.equal(history.data.tradeDate, shanghaiDay(-1));
+  assert.equal(history.data.previousClose, 1490);
+  assert.deepEqual(
+    history.data.minuteBars.map((bar) => bar.close),
+    [1495, 1502],
+  );
+  assert.ok(history.data.minuteBars.every((bar) => Number.isFinite(bar.indexChange)));
+  assert.ok(history.data.minuteBars.every((bar) => Number.isFinite(bar.sectorChange)));
 });

@@ -148,6 +148,11 @@ type SignalAlert = {
   sourceTime?: string;
 };
 
+type HistoricalSession = {
+  tradeDate: string;
+  ticks: Tick[];
+};
+
 type NotificationPermissionState =
   | NotificationPermission
   | "unsupported"
@@ -508,60 +513,6 @@ function getMarketStatus(epoch: number): MarketStatus {
     allowSignals: false,
     kind: "closed",
   };
-}
-
-function minuteLabel(index: number) {
-  const minute = index % 240;
-  const total = minute < 120 ? 9 * 60 + 30 + minute : 13 * 60 + minute - 120;
-  const hour = Math.floor(total / 60);
-  return `${String(hour).padStart(2, "0")}:${String(total % 60).padStart(
-    2,
-    "0",
-  )}`;
-}
-
-function seededNoise(index: number, seed: number) {
-  const value = Math.sin((index + 1) * (12.9898 + seed) * 78.233) * 43758.5453;
-  return (value - Math.floor(value) - 0.5) * 0.0013;
-}
-
-function demoDrift(index: number) {
-  const phase = index % 150;
-  if (phase < 34) return -0.00072;
-  if (phase < 48) return -0.00012;
-  if (phase < 88) return 0.00084;
-  if (phase < 105) return 0.00014;
-  if (phase < 130) return -0.00058;
-  return 0.00018;
-}
-
-function makeInitialTicks(holding: Holding): Tick[] {
-  const seed = Number(holding.code.slice(-2)) / 10;
-  const ticks: Tick[] = [];
-  const previousClose =
-    holding.previousClose > 0
-      ? holding.previousClose
-      : holding.cost > 0
-        ? holding.cost
-        : 10;
-  let price = previousClose;
-
-  for (let index = 0; index < 64; index += 1) {
-    const change = demoDrift(index + 12) + seededNoise(index, seed);
-    price = Math.max(0.01, price * (1 + change));
-    ticks.push({
-      time: minuteLabel(index),
-      price,
-      volume: 8000 + Math.round(Math.abs(change) * 9500000),
-      sectorChange: ((price / previousClose - 1) * 100) * 0.72,
-      indexChange: ((price / previousClose - 1) * 100) * 0.38,
-      indexLevel:
-        4000 *
-        (1 +
-          (((price / previousClose - 1) * 100) * 0.38) / 100),
-    });
-  }
-  return ticks;
 }
 
 function oneThirdQuantity(sellable: number) {
@@ -938,6 +889,8 @@ export default function MarketCopilot() {
     useState<ConnectionState>("paused");
   const [paused, setPaused] = useState(false);
   const [demoPlaying, setDemoPlaying] = useState(false);
+  const [historicalSession, setHistoricalSession] =
+    useState<HistoricalSession | null>(null);
   const [config, setConfig] = useState<FeedConfig>(DEFAULT_CONFIG);
   const [waveGuide, setWaveGuide] =
     useState<WaveGuideConfig>(DEFAULT_WAVE_GUIDE);
@@ -979,7 +932,7 @@ export default function MarketCopilot() {
   const signalRef = useRef<SignalState>("blocked");
   const cyclePhaseRef = useRef<CyclePhase>("neutral");
   const cycleQuantityRef = useRef(0);
-  const tickIndexRef = useRef(64);
+  const tickIndexRef = useRef(0);
   const realFeedStartedRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -1348,7 +1301,8 @@ export default function MarketCopilot() {
   const activateHolding = useCallback(
     (next: Holding) => {
       setSelectedCode(next.code);
-      setTicks(config.mode === "demo" ? makeInitialTicks(next) : []);
+      setTicks([]);
+      setHistoricalSession(null);
       setDailyBars([]);
       setMarketDataContext({
         ...EMPTY_MARKET_CONTEXT,
@@ -1359,7 +1313,7 @@ export default function MarketCopilot() {
       setDataValidation(null);
       setPaperQuantity(oneThirdQuantity(next.sellable) || 100);
       setExecutionPrice(next.price);
-      tickIndexRef.current = 64;
+      tickIndexRef.current = 0;
       signalRef.current = "blocked";
       cyclePhaseRef.current = "neutral";
       cycleQuantityRef.current = 0;
@@ -1470,47 +1424,116 @@ export default function MarketCopilot() {
   ]);
 
   useEffect(() => {
+    if (config.mode !== "demo") return;
+    let active = true;
+    const load = async () => {
+      setDemoPlaying(false);
+      setHistoricalSession(null);
+      setTicks([]);
+      setConnection("connecting");
+      setFeedMessage("正在读取前一交易日真实分钟行情");
+      try {
+        const response = await fetch(
+          `/quote?symbol=${selected.code}&market=${selected.market}&session=previous`,
+          { cache: "no-store" },
+        );
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        if (payload.meta?.realHistorical !== true) {
+          throw new Error("行情源未确认真实历史数据");
+        }
+        const tradeDate = String(payload.data?.tradeDate || "");
+        const previousClose = Number(payload.data?.previousClose);
+        const bars = Array.isArray(payload.data?.minuteBars)
+          ? payload.data.minuteBars
+              .map((bar: Record<string, unknown>) => {
+                const parsedTime = parseSourceTimestamp(bar.time, Date.now());
+                return {
+                  price: Number(bar.close),
+                  open: Number(bar.open),
+                  high: Number(bar.high),
+                  low: Number(bar.low),
+                  volume: Number(bar.volume) || 1,
+                  amount: Number(bar.amount) || 0,
+                  time: parsedTime.minute,
+                  sectorChange: Number(bar.sectorChange),
+                  indexChange: Number(bar.indexChange),
+                  indexLevel: Number.isFinite(Number(bar.indexLevel))
+                    ? Number(bar.indexLevel)
+                    : undefined,
+                } satisfies Tick;
+              })
+              .filter((bar: Tick) => Number.isFinite(bar.price) && bar.price > 0)
+          : [];
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(tradeDate) || bars.length < 16) {
+          throw new Error("前一交易日真实分钟行情不完整");
+        }
+        if (!Number.isFinite(previousClose) || previousClose <= 0) {
+          throw new Error("前一交易日前收盘价缺失");
+        }
+        if (!active) return;
+        setHistoricalSession({ tradeDate, ticks: bars });
+        setTicks([bars[0]]);
+        tickIndexRef.current = 1;
+        setLastSourceTime(`${tradeDate} ${bars[0].time}`);
+        setConnection("paused");
+        setFeedMessage(
+          `已载入 ${tradeDate} 东方财富真实分钟行情 · ${bars.length} 根 · 等待开始演练`,
+        );
+        setHoldings((current) =>
+          current.map((holding) =>
+            holding.code === selected.code
+              ? { ...holding, price: bars[0].price, previousClose }
+              : holding,
+          ),
+        );
+      } catch (error) {
+        if (!active) return;
+        setConnection("error");
+        setFeedMessage(
+          `历史演练不可用：${error instanceof Error ? error.message : "真实行情读取失败"}`,
+        );
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [config.mode, selected.code, selected.market]);
+
+  useEffect(() => {
     if (config.mode === "demo") {
+      if (!historicalSession) return;
       if (!demoPlaying) {
         const statusTimer = window.setTimeout(() => {
           setConnection("paused");
-          setFeedMessage("历史演练已暂停 · 图中不是实时行情");
+          setFeedMessage(
+            `历史演练已暂停 · ${historicalSession.tradeDate} 东方财富真实行情`,
+          );
         }, 0);
         return () => window.clearTimeout(statusTimer);
       }
       const statusTimer = window.setTimeout(() => {
         setConnection("connected");
-        setFeedMessage("历史演练播放中 · 约1.2秒推进1分钟 · 非真实行情");
+        setFeedMessage(
+          `${historicalSession.tradeDate} 真实行情演练中 · 约1.2秒推进1分钟`,
+        );
       }, 0);
       const timer = window.setInterval(() => {
         const index = tickIndexRef.current;
-        const seed = Number(selected.code.slice(-2)) / 10;
-        const move = demoDrift(index + 12) + seededNoise(index, seed);
+        const tick = historicalSession.ticks[index];
+        if (!tick) {
+          setDemoPlaying(false);
+          setFeedMessage(
+            `${historicalSession.tradeDate} 真实行情演练完成 · 共 ${historicalSession.ticks.length} 根`,
+          );
+          return;
+        }
         const receivedAt = Date.now();
         tickIndexRef.current += 1;
         setLastReceivedAt(receivedAt);
-        setLastSourceTime(`历史演练 ${minuteLabel(index)}`);
-        setTicks((current) => {
-          const previous = current.at(-1)?.price ?? selected.price;
-          const price = Math.max(0.01, previous * (1 + move));
-          return [
-            ...current.slice(-179),
-            {
-              time: minuteLabel(index),
-              price,
-              volume: 8000 + Math.round(Math.abs(move) * 9500000),
-              sectorChange:
-                ((price / selected.previousClose - 1) * 100) * 0.72,
-              indexChange:
-                ((price / selected.previousClose - 1) * 100) * 0.38,
-              indexLevel:
-                4000 *
-                (1 +
-                  (((price / selected.previousClose - 1) * 100) * 0.38) /
-                    100),
-            },
-          ];
-        });
+        setLastSourceTime(`${historicalSession.tradeDate} ${tick.time}`);
+        setTicks((current) => [...current.slice(-179), tick]);
       }, 1200);
       return () => {
         window.clearTimeout(statusTimer);
@@ -1770,6 +1793,7 @@ export default function MarketCopilot() {
     appendTick,
     config,
     demoPlaying,
+    historicalSession,
     marketStatus.allowQuotes,
     marketStatus.label,
     paused,
@@ -1845,7 +1869,11 @@ export default function MarketCopilot() {
       playSignalTone(context, state);
     }
 
-    const historicalTicks = ticks.length > 0 ? ticks : makeInitialTicks(selected);
+    const historicalTicks = historicalSession?.ticks ?? [];
+    if (!historicalTicks.length) {
+      setFeedMessage("前一交易日真实行情尚未载入，无法预览提醒");
+      return;
+    }
     const historicalTick = historicalTicks.reduce((candidate, tick) => {
       if (state === "confirmB") {
         return tick.price < candidate.price ? tick : candidate;
@@ -1860,7 +1888,7 @@ export default function MarketCopilot() {
       price: historicalTick.price,
       occurredAt: Date.now(),
       historicalPreview: true,
-      sourceTime: historicalTick.time,
+      sourceTime: `${historicalSession?.tradeDate} ${historicalTick.time}`,
     });
     const notificationSent = showSystemNotification(
       state,
@@ -2170,7 +2198,9 @@ export default function MarketCopilot() {
     config.mode === "demo"
       ? demoPlaying
         ? connection
-        : "paused"
+        : connection === "error"
+          ? "error"
+          : "paused"
       : stale || (dataValidation !== null && !dataValidation.passed)
         ? "error"
         : paused || !marketStatus.allowQuotes
@@ -2178,9 +2208,13 @@ export default function MarketCopilot() {
           : connection;
   const connectionLabel =
     config.mode === "demo"
-      ? demoPlaying
-        ? "历史演练中"
-        : "演练未启动"
+      ? connection === "error"
+        ? "历史数据异常"
+        : demoPlaying
+          ? "历史演练中"
+          : historicalSession
+            ? "演练未启动"
+            : "历史数据加载中"
       : stale
         ? "行情已陈旧"
         : dataValidation !== null && !dataValidation.passed
@@ -2194,11 +2228,13 @@ export default function MarketCopilot() {
               : "正在连接";
   const sourceName =
     config.mode === "demo"
-      ? "本地历史演练"
+      ? "东方财富真实历史行情"
       : config.providerName.trim() || "未配置行情源";
   const delayLabel =
     config.mode === "demo"
-      ? "非真实行情"
+      ? historicalSession
+        ? `前一交易日 · ${historicalSession.tradeDate}`
+        : "真实历史行情加载中"
       : config.delayType === "realtime"
         ? "已声明实时"
         : config.delayType === "delayed"
@@ -2230,8 +2266,17 @@ export default function MarketCopilot() {
           </div>
           <button
             className="button secondary"
+            disabled={config.mode === "demo" && !historicalSession}
             onClick={() => {
               if (config.mode === "demo") {
+                if (
+                  !demoPlaying &&
+                  historicalSession &&
+                  tickIndexRef.current >= historicalSession.ticks.length
+                ) {
+                  tickIndexRef.current = 1;
+                  setTicks([historicalSession.ticks[0]]);
+                }
                 setDemoPlaying((current) => !current);
               } else {
                 setPaused((current) => !current);
@@ -2456,7 +2501,9 @@ export default function MarketCopilot() {
             </div>
             <div className={`chart-source-note ${config.mode}`}>
               {config.mode === "demo"
-                ? "历史演练 · 非真实行情"
+                ? historicalSession
+                  ? `${historicalSession.tradeDate} · 东方财富真实分钟行情`
+                  : "前一交易日真实行情加载中"
                 : `${sourceName} · ${delayLabel}`}
             </div>
           </div>
@@ -3112,13 +3159,13 @@ export default function MarketCopilot() {
                   key={mode}
                   className={config.mode === mode ? "active" : ""}
                   onClick={() => {
+                    if (mode === config.mode) return;
                     setDemoPlaying(false);
                     setLastReceivedAt(null);
                     setLastSourceTime(null);
                     realFeedStartedRef.current = false;
-                    setTicks(
-                      mode === "demo" ? makeInitialTicks(selected) : [],
-                    );
+                    setHistoricalSession(null);
+                    setTicks([]);
                     setConfig((current) => ({ ...current, mode }));
                   }}
                 >
@@ -3129,9 +3176,9 @@ export default function MarketCopilot() {
 
             {config.mode === "demo" ? (
               <div className="demo-description">
-                <strong>仅供验证界面和状态机，不代表当前行情</strong>
+                <strong>使用前一交易日真实分钟行情演练</strong>
                 <p>
-                  样例分时默认静止，保存后需手动点击“开始历史演练”才会推进。休市日也不会把它标记为实时数据。
+                  数据来自东方财富公开分钟行情，载入后需手动点击“开始历史演练”推进；取数或交易日校验失败时不会回退到模拟数据。
                 </p>
                 <div className="demo-alert-preview" aria-label="历史提醒预览">
                   <button

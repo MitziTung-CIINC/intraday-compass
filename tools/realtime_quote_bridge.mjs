@@ -55,7 +55,7 @@ const EASTMONEY_QUOTE_URL =
   "https://push2his.eastmoney.com/api/qt/stock/get?invt=2&fltt=1&secid={secid}&fields=f43,f44,f45,f46,f47,f48,f50,f57,f58,f59,f60,f86,f127,f128,f129,f169,f170";
 const EASTMONEY_TRENDS_URL =
   process.env.EASTMONEY_TRENDS_URL ||
-  "https://push2his.eastmoney.com/api/qt/stock/trends2/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=1&iscr=0&secid={secid}";
+  "https://push2his.eastmoney.com/api/qt/stock/trends2/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays={ndays}&iscr=0&secid={secid}";
 const EASTMONEY_KLINE_URL =
   process.env.EASTMONEY_KLINE_URL ||
   "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=101&fqt=1&lmt=60&end=20500000&iscca=1&secid={secid}";
@@ -338,10 +338,17 @@ function normalizeTrendRows(rows) {
     .sort((left, right) => Date.parse(left.time) - Date.parse(right.time));
 }
 
-async function fetchTrends(descriptor) {
+async function fetchTrends(descriptor, days = 1) {
   const startedAt = performance.now();
+  const url = new URL(
+    replaceTemplate(EASTMONEY_TRENDS_URL, {
+      secid: descriptor.secid,
+      ndays: String(days),
+    }),
+  );
+  url.searchParams.set("ndays", String(days));
   const payload = await fetchJson(
-    replaceTemplate(EASTMONEY_TRENDS_URL, { secid: descriptor.secid }),
+    url.toString(),
   );
   const bars = normalizeTrendRows(payload?.data?.trends);
   const previousClose = numeric(payload?.data?.preClose);
@@ -355,6 +362,31 @@ async function fetchTrends(descriptor) {
     bars,
     sourceTime: bars.at(-1).time,
     fetchLatencyMs: Math.max(0, Math.round(performance.now() - startedAt)),
+  };
+}
+
+function shanghaiDate() {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function selectTradingSession(series, date) {
+  const bars = series.bars.filter((bar) => bar.time.startsWith(date));
+  const previousClose = series.bars
+    .filter((bar) => bar.time.slice(0, 10) < date)
+    .at(-1)?.close;
+  if (!bars.length || !Number.isFinite(previousClose) || previousClose <= 0) {
+    throw new Error(`${series.name} 的 ${date} 分钟行情不完整`);
+  }
+  return {
+    ...series,
+    bars,
+    previousClose,
+    sourceTime: bars.at(-1).time,
   };
 }
 
@@ -743,6 +775,83 @@ async function getMarketQuote(code, market) {
   };
 }
 
+async function getPreviousTradingSession(code, market) {
+  const latestQuote = await getLatestQuote(code, market);
+  const instrumentDescriptor = {
+    code: `${code}.${market}`,
+    secid: toEastmoneySecId(code, market),
+    name: latestQuote.name,
+    source: "eastmoney-official-trends2",
+  };
+  const indexDescriptor = {
+    ...marketIndexDescriptor(market),
+    source: "eastmoney-official-trends2",
+  };
+  const instrumentSeries = await fetchTrends(instrumentDescriptor, 5);
+  const indexSeries = await fetchTrends(indexDescriptor, 5);
+  const dates = [...new Set(indexSeries.bars.map((bar) => bar.time.slice(0, 10)))];
+  const tradeDate = dates.filter((date) => date < shanghaiDate()).at(-1);
+  if (!tradeDate) throw new Error("东方财富未返回前一交易日分钟行情");
+
+  const instrument = selectTradingSession(instrumentSeries, tradeDate);
+  const index = selectTradingSession(indexSeries, tradeDate);
+  let comparison = null;
+  let comparisonDescriptor = null;
+  let comparisonError = null;
+  try {
+    comparisonDescriptor = await resolveComparisonDescriptor(latestQuote);
+    if (comparisonDescriptor) {
+      comparison = selectTradingSession(
+        await fetchTrends(comparisonDescriptor, 5),
+        tradeDate,
+      );
+    } else if (isExchangeTradedFund(code)) {
+      comparisonError = "免费公开接口未提供可靠的 ETF 跟踪指数映射";
+    }
+  } catch (error) {
+    comparisonError = error instanceof Error ? error.message : "行业分钟线不可用";
+  }
+  const daily = await getDailyBars(code, market);
+  const bars = enrichMinuteBars(instrument, index, comparison);
+  return {
+    ok: true,
+    data: {
+      symbol: code,
+      market,
+      name: latestQuote.name,
+      price: bars.at(-1).close,
+      previousClose: instrument.previousClose,
+      time: bars.at(-1).time,
+      tradeDate,
+      minuteBars: bars,
+      dailyBars: daily.bars,
+      context: {
+        instrumentKind: isExchangeTradedFund(code) ? "etf" : "stock",
+        indexName: index.name,
+        indexCode: index.code,
+        indexSource: index.source,
+        indexSourceTime: index.sourceTime,
+        indexSeriesValid: bars.some((bar) => Number.isFinite(bar.indexChange)),
+        sectorName: comparison?.name || comparisonDescriptor?.name || null,
+        sectorCode: comparison?.code || comparisonDescriptor?.code || null,
+        sectorSource: comparison?.source || comparisonDescriptor?.source || null,
+        sectorSourceTime: comparison?.sourceTime || null,
+        sectorSeriesValid: bars.some((bar) => Number.isFinite(bar.sectorChange)),
+        sectorError: comparisonError,
+        dailySeriesValid: daily.bars.length >= 20,
+        error: null,
+      },
+    },
+    meta: {
+      provider: "eastmoney-official-market-data",
+      quoteSource: "eastmoney-official-historical-minute",
+      minuteSource: "eastmoney-official-trends2",
+      tradeDate,
+      realHistorical: true,
+    },
+  };
+}
+
 function allowedOrigin(request) {
   const origin = request.headers.origin || "";
   return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
@@ -825,7 +934,7 @@ const server = http.createServer(async (request, response) => {
     }
     return;
   }
-  if (url.pathname !== "/quote") {
+  if (!["/quote", "/history"].includes(url.pathname)) {
     sendJson(request, response, 404, { ok: false, error: "not found" });
     return;
   }
@@ -833,7 +942,14 @@ const server = http.createServer(async (request, response) => {
   try {
     const code = normalizeCode(url.searchParams.get("symbol"));
     const market = inferMarket(code, url.searchParams.get("market"));
-    sendJson(request, response, 200, await getMarketQuote(code, market));
+    sendJson(
+      request,
+      response,
+      200,
+      url.pathname === "/history"
+        ? await getPreviousTradingSession(code, market)
+        : await getMarketQuote(code, market),
+    );
   } catch (error) {
     sendJson(request, response, 502, {
       ok: false,

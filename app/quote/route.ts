@@ -17,6 +17,9 @@ export async function GET(request: Request) {
     "",
   );
   const upstream = new URL(`${bridgeUrl}/quote`);
+  if (incoming.searchParams.get("session") === "previous") {
+    upstream.pathname = "/history";
+  }
   upstream.searchParams.set("symbol", symbol);
   upstream.searchParams.set("market", market);
 
