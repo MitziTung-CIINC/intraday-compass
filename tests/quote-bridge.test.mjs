@@ -77,6 +77,21 @@ function historicalTrendPayload(name, earlierClose, replayCloses, currentClose) 
   };
 }
 
+function singleSessionHistoricalTrendPayload(name, previousClose, replayCloses) {
+  const replay = shanghaiDay(-1);
+  const row = (time, close) =>
+    `${replay} ${time},${close},${close},${close},${close},100,${close * 10000},${close}`;
+  return {
+    data: {
+      name,
+      preClose: previousClose,
+      trends: replayCloses.map((close, index) =>
+        row(index === 0 ? "09:30" : "15:00", close),
+      ),
+    },
+  };
+}
+
 function dailyPayload(basePrice) {
   return {
     data: {
@@ -398,7 +413,10 @@ test("history endpoint returns only the previous trading session from real minut
       assert.equal(url.searchParams.get("ndays"), "5");
       const secid = url.searchParams.get("secid");
       if (secid === "1.600519") {
-        sendJson(response, historicalTrendPayload("贵州茅台", 1490, [1495, 1502], 1504));
+        sendJson(
+          response,
+          singleSessionHistoricalTrendPayload("贵州茅台", 1490, [1495, 1502]),
+        );
       } else if (secid === "90.BK1277") {
         sendJson(response, historicalTrendPayload("白酒Ⅱ", 5100, [5120, 5140], 5150));
       } else {

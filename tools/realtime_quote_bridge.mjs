@@ -376,9 +376,14 @@ function shanghaiDate() {
 
 function selectTradingSession(series, date) {
   const bars = series.bars.filter((bar) => bar.time.startsWith(date));
-  const previousClose = series.bars
+  const earlierClose = series.bars
     .filter((bar) => bar.time.slice(0, 10) < date)
     .at(-1)?.close;
+  const previousClose = Number.isFinite(earlierClose)
+    ? earlierClose
+    : series.bars[0]?.time.startsWith(date)
+      ? series.previousClose
+      : undefined;
   if (!bars.length || !Number.isFinite(previousClose) || previousClose <= 0) {
     throw new Error(`${series.name} 的 ${date} 分钟行情不完整`);
   }
