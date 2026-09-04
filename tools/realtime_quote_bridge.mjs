@@ -6,6 +6,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { buildBondRadarSnapshot } from "./update-bond-radar.mjs";
+import { replayDate, assessReplaySession } from "./history-session.mjs";
 
 const PROJECT_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const execFileAsync = promisify(execFile);
@@ -780,7 +781,8 @@ async function getMarketQuote(code, market) {
   };
 }
 
-async function getPreviousTradingSession(code, market) {
+async function getHistoricalSession(code, market, session = "previous") {
+  if (!["today", "previous"].includes(session)) throw new Error("session 仅支持 today 或 previous");
   const latestQuote = await getLatestQuote(code, market);
   const instrumentDescriptor = {
     code: `${code}.${market}`,
@@ -792,13 +794,14 @@ async function getPreviousTradingSession(code, market) {
     ...marketIndexDescriptor(market),
     source: "eastmoney-official-trends2",
   };
-  const instrumentSeries = await fetchTrends(instrumentDescriptor, 5);
-  const indexSeries = await fetchTrends(indexDescriptor, 5);
-  const dates = [...new Set(indexSeries.bars.map((bar) => bar.time.slice(0, 10)))];
-  const tradeDate = dates.filter((date) => date < shanghaiDate()).at(-1);
-  if (!tradeDate) throw new Error("东方财富未返回前一交易日分钟行情");
+  const days = session === "today" ? 1 : 5;
+  const instrumentSeries = await fetchTrends(instrumentDescriptor, days);
+  const indexSeries = await fetchTrends(indexDescriptor, days);
+  const tradeDate = replayDate(indexSeries, session, shanghaiDate());
 
   const instrument = selectTradingSession(instrumentSeries, tradeDate);
+  const assessed = assessReplaySession(instrument.bars, tradeDate);
+  instrument.bars = assessed.bars;
   const index = selectTradingSession(indexSeries, tradeDate);
   let comparison = null;
   let comparisonDescriptor = null;
@@ -807,7 +810,7 @@ async function getPreviousTradingSession(code, market) {
     comparisonDescriptor = await resolveComparisonDescriptor(latestQuote);
     if (comparisonDescriptor) {
       comparison = selectTradingSession(
-        await fetchTrends(comparisonDescriptor, 5),
+        await fetchTrends(comparisonDescriptor, days),
         tradeDate,
       );
     } else if (isExchangeTradedFund(code)) {
@@ -820,11 +823,16 @@ async function getPreviousTradingSession(code, market) {
   let dailyError = null;
   try {
     daily = await getDailyBars(code, market);
+    // The day's closing daily bar is future information at replay opening time.
+    daily = { ...daily, bars: daily.bars.filter((bar) => bar.date < tradeDate.replaceAll("-", "")) };
+    if (daily.bars.length < 20) dailyError = "回放日前的真实日K不足20根，完整策略判断不可用";
   } catch (error) {
     dailyError =
       error instanceof Error ? error.message : "东方财富公开日 K 不可用";
   }
   const bars = enrichMinuteBars(instrument, index, comparison);
+  const indexTimes = new Set(index.bars.map((bar) => bar.time));
+  const indexSeriesValid = bars.every((bar) => indexTimes.has(bar.time) && Number.isFinite(bar.indexChange));
   return {
     ok: true,
     data: {
@@ -835,6 +843,7 @@ async function getPreviousTradingSession(code, market) {
       previousClose: instrument.previousClose,
       time: bars.at(-1).time,
       tradeDate,
+      coverage: assessed.coverage,
       minuteBars: bars,
       dailyBars: daily.bars,
       context: {
@@ -843,7 +852,8 @@ async function getPreviousTradingSession(code, market) {
         indexCode: index.code,
         indexSource: index.source,
         indexSourceTime: index.sourceTime,
-        indexSeriesValid: bars.some((bar) => Number.isFinite(bar.indexChange)),
+        indexSeriesValid,
+        indexError: indexSeriesValid ? null : "指数分钟行情与个股回放时间未完全对齐，B/S判断冻结",
         sectorName: comparison?.name || comparisonDescriptor?.name || null,
         sectorCode: comparison?.code || comparisonDescriptor?.code || null,
         sectorSource: comparison?.source || comparisonDescriptor?.source || null,
@@ -861,6 +871,8 @@ async function getPreviousTradingSession(code, market) {
       minuteSource: "eastmoney-official-trends2",
       tradeDate,
       realHistorical: true,
+      session,
+      fetchedAt: new Date().toISOString(),
     },
   };
 }
@@ -953,14 +965,19 @@ const server = http.createServer(async (request, response) => {
   }
 
   try {
+    const session = url.searchParams.get("session");
+    if (session !== null && !["today", "previous"].includes(session)) {
+      sendJson(request, response, 400, { ok: false, error: "session 仅支持 today 或 previous" });
+      return;
+    }
     const code = normalizeCode(url.searchParams.get("symbol"));
     const market = inferMarket(code, url.searchParams.get("market"));
     sendJson(
       request,
       response,
       200,
-      url.pathname === "/history"
-        ? await getPreviousTradingSession(code, market)
+      url.pathname === "/history" || session !== null
+        ? await getHistoricalSession(code, market, session || "previous")
         : await getMarketQuote(code, market),
     );
   } catch (error) {

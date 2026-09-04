@@ -17,8 +17,13 @@ export async function GET(request: Request) {
     "",
   );
   const upstream = new URL(`${bridgeUrl}/quote`);
-  if (incoming.searchParams.get("session") === "previous") {
+  const session = incoming.searchParams.get("session");
+  if (session !== null && !["today", "previous"].includes(session)) {
+    return Response.json({ error: "session 仅支持 today 或 previous" }, { status: 400 });
+  }
+  if (session !== null) {
     upstream.pathname = "/history";
+    upstream.searchParams.set("session", session);
   }
   upstream.searchParams.set("symbol", symbol);
   upstream.searchParams.set("market", market);
@@ -26,7 +31,7 @@ export async function GET(request: Request) {
   try {
     const response = await fetch(upstream, {
       cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
+      signal: AbortSignal.timeout(session ? 45_000 : 12_000),
     });
     const body = await response.text();
     return new Response(body, {

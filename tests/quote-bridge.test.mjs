@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import http from "node:http";
 import test from "node:test";
+import { assessReplaySession, replayDate } from "../tools/history-session.mjs";
 
 function shanghaiNow() {
   return new Date(Date.now() + 8 * 60 * 60 * 1000)
@@ -111,6 +112,35 @@ function sendJson(response, payload) {
   response.end(JSON.stringify(payload));
 }
 
+test("replay date selection never substitutes yesterday for today", () => {
+  const series = { bars: [{ time: "2026-09-03T15:00:00+08:00" }] };
+  assert.throws(() => replayDate(series, "today", "2026-09-04"), /不会替换/);
+  assert.equal(replayDate(series, "previous", "2026-09-04"), "2026-09-03");
+  assert.throws(() => replayDate(series, "other", "2026-09-04"), /仅支持/);
+});
+
+test("replay coverage excludes unfinished minutes and identifies gaps without padding", () => {
+  const date = "2026-09-04";
+  const rows = Array.from({ length: 241 }, (_, i) => {
+    const minute = i <= 120 ? 570 + i : 780 + i - 120;
+    const time = `${date}T${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}:00+08:00`;
+    return { time, open: 10, close: 10, high: 10, low: 10, volume: 0 };
+  });
+  const full = assessReplaySession(rows, date, Date.parse(`${date}T15:02:00+08:00`));
+  assert.equal(full.coverage.complete, true);
+  assert.equal(full.coverage.barCount, 241);
+  const partial = assessReplaySession(rows, date, Date.parse(`${date}T09:35:35+08:00`));
+  assert.equal(partial.coverage.complete, false);
+  assert.equal(partial.bars.at(-1).time.slice(11, 16), "09:34");
+  assert.equal(partial.coverage.missingMinutes, 0);
+  const missing = assessReplaySession(rows.filter((_, i) => i !== 5), date, Date.parse(`${date}T15:02:00+08:00`));
+  assert.equal(missing.coverage.complete, false);
+  assert.equal(missing.coverage.missingMinutes, 1);
+  assert.equal(missing.bars.length, 240);
+  assert.throws(() => assessReplaySession([...rows, rows[1]], date, Date.parse(`${date}T15:02:00+08:00`)), /重复/);
+  assert.throws(() => assessReplaySession(rows, "2026-09-03"), /日期不一致/);
+});
+
 async function listen(server, port) {
   await new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -132,9 +162,9 @@ function bridgeEnvironment(bridgePort, upstreamPort, extra = {}) {
 }
 
 async function waitForBridge(bridgePort) {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  for (let attempt = 0; attempt < 200; attempt += 1) {
     try {
-      const response = await fetch(`http://127.0.0.1:${bridgePort}/health`);
+      const response = await fetch(`http://127.0.0.1:${bridgePort}/health`, { signal: AbortSignal.timeout(500) });
       if (response.ok) return response.json();
     } catch {
       // Process startup is asynchronous.
@@ -469,4 +499,58 @@ test("history endpoint returns only the previous trading session from real minut
   assert.deepEqual(history.data.dailyBars, []);
   assert.equal(history.data.context.dailySeriesValid, false);
   assert.match(history.data.context.dailyError, /公开日 K 不可用/);
+});
+
+test("today replay works through the local /quote alias, rejects stale days and excludes future daily bars", async (context) => {
+  const bridgePort = 22000 + (process.pid % 200);
+  const upstreamPort = bridgePort + 1000;
+  let stale = false;
+  const date = shanghaiDay();
+  const upstream = http.createServer((request, response) => {
+    const url = new URL(request.url, `http://127.0.0.1:${upstreamPort}`);
+    const instrument = url.searchParams.get("secid") === "0.000938";
+    if (url.pathname === "/quote") {
+      return sendJson(response, snapshot({ code: instrument ? "000938" : "399001", name: instrument ? "紫光股份" : "深证成指", price: 35, previousClose: 38 }));
+    }
+    if (url.pathname === "/trends") {
+      assert.equal(url.searchParams.get("ndays"), "1");
+      const day = stale ? shanghaiDay(-1) : date;
+      return sendJson(response, { data: { name: instrument ? "紫光股份" : "深证成指", preClose: 38,
+        trends: ["09:30", "09:31", "09:32"].map((minute) => `${day} ${minute},35,35,35,35,100,350000,35`) } });
+    }
+    if (url.pathname === "/kline") {
+      const daily = dailyPayload(30);
+      daily.data.klines.push(`${date},999,999,999,999,999,999`);
+      return sendJson(response, daily);
+    }
+    if (url.pathname === "/boards") return sendJson(response, { data: { diff: [] } });
+    assert.fail(`unexpected upstream path ${url.pathname}`);
+  });
+  await listen(upstream, upstreamPort);
+  context.after(() => upstream.close());
+  const child = spawn(process.execPath, ["tools/realtime_quote_bridge.mjs"], { env: bridgeEnvironment(bridgePort, upstreamPort), stdio: "ignore" });
+  context.after(() => child.kill());
+  await waitForBridge(bridgePort);
+  const url = `http://127.0.0.1:${bridgePort}/quote?symbol=000938&market=SZ&session=today`;
+  const response = await fetch(url);
+  const history = await response.json();
+  if (Date.now() < Date.parse(`${date}T09:32:00+08:00`)) {
+    assert.equal(response.status, 502);
+    assert.match(history.error, /不足2根/);
+  } else {
+    assert.equal(response.status, 200, JSON.stringify(history));
+    assert.equal(history.meta.session, "today");
+    assert.equal(history.meta.realHistorical, true);
+    assert.equal(history.data.tradeDate, date);
+    assert.equal(history.data.previousClose, 38);
+    assert.equal(history.data.coverage.complete, false);
+    assert.ok(history.data.minuteBars.every((bar) => bar.time.startsWith(date)));
+    assert.ok(history.data.dailyBars.every((bar) => bar.date < date.replaceAll("-", "")));
+    assert.ok(history.data.dailyBars.every((bar) => bar.close !== 999));
+  }
+  stale = true;
+  const rejected = await (await fetch(url)).json();
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.error, /不会替换/);
+  assert.equal((await fetch(url.replace("session=today", "session=invalid"))).status, 400);
 });

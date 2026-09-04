@@ -65,6 +65,20 @@ test("includes the StopWatch hardware sync controls", async () => {
   assert.match(source, /readStopWatchSelection/);
 });
 
+test("offers today replay with source coverage, retry and speed controls", async () => {
+  const source = await readFile(new URL("../app/MarketCopilot.tsx", import.meta.url), "utf8");
+  assert.match(source, /今日回放/);
+  assert.match(source, /前一交易日/);
+  assert.match(source, /重新载入真实行情/);
+  assert.match(source, /20倍速/);
+  assert.match(source, /源数据截至/);
+  assert.match(source, /历史回放不录入真实成交/);
+  assert.doesNotMatch(source, /session=previous/);
+  assert.doesNotMatch(source, /config.mode === "demo" \|\| marketDataContext/);
+  const route = await readFile(new URL("../app/quote/route.ts", import.meta.url), "utf8");
+  assert.match(route, /upstream.searchParams.set\("session", session\)/);
+});
+
 test("describes convertible bonds as T+0 instruments", async () => {
   const source = await readFile(
     new URL("../app/MarketCopilot.tsx", import.meta.url),

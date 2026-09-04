@@ -1458,6 +1458,21 @@ textarea:focus {
   padding: 17px;
 }
 
+.replay-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 18px 24px;
+  background: #eff6ff;
+  border-bottom: 1px solid #bfd5f3;
+  font-size: 14px;
+}
+
+.replay-toolbar label { display: flex; align-items: center; gap: 8px; }
+.replay-toolbar select { padding: 8px 12px; border: 1px solid #b5c8df; border-radius: 6px; background: white; color: #172a42; font: inherit; }
+.replay-toolbar p { flex-basis: 100%; margin: 0; line-height: 1.6; }
+
 .demo-description strong {
   font-size: 13px;
 }

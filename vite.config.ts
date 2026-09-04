@@ -49,8 +49,8 @@ export default defineConfig(async () => {
         ? { watch: { useFsEvents: false, usePolling: true } }
         : {}),
       proxy: {
-        "/quote": "http://127.0.0.1:8765",
-        "/health": "http://127.0.0.1:8765",
+        "/quote": process.env.QUOTE_BRIDGE_URL || "http://127.0.0.1:8765",
+        "/health": process.env.QUOTE_BRIDGE_URL || "http://127.0.0.1:8765",
       },
     },
     plugins: [

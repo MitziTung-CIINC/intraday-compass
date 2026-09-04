@@ -150,7 +150,10 @@ type SignalAlert = {
 
 type HistoricalSession = {
   tradeDate: string;
+  previousClose: number;
   ticks: Tick[];
+  coverage: { complete: boolean; firstTime: string; lastTime: string; missingMinutes: number; message: string };
+  warnings: string[];
 };
 
 type NotificationPermissionState =
@@ -889,6 +892,9 @@ export default function MarketCopilot() {
     useState<ConnectionState>("paused");
   const [paused, setPaused] = useState(false);
   const [demoPlaying, setDemoPlaying] = useState(false);
+  const [replaySession, setReplaySession] = useState<"today" | "previous">("today");
+  const [replayReload, setReplayReload] = useState(0);
+  const [replaySpeed, setReplaySpeed] = useState(1);
   const [historicalSession, setHistoricalSession] =
     useState<HistoricalSession | null>(null);
   const [config, setConfig] = useState<FeedConfig>(DEFAULT_CONFIG);
@@ -943,9 +949,10 @@ export default function MarketCopilot() {
     config.mode === "demo"
       ? latestTick?.price ?? selected.price
       : selected.price;
+  const referenceClose = config.mode === "demo" ? historicalSession?.previousClose ?? 0 : selected.previousClose;
   const change =
-    selected.previousClose > 0
-      ? ((currentPrice / selected.previousClose - 1) * 100) || 0
+    referenceClose > 0
+      ? ((currentPrice / referenceClose - 1) * 100) || 0
       : 0;
   const marketStatus = useMemo(() => getMarketStatus(clockNow), [clockNow]);
   const isRealFeed = config.mode !== "demo";
@@ -965,19 +972,18 @@ export default function MarketCopilot() {
         dataValidation?.passed === true);
   const modelContext = useMemo<ModelContext>(
     () => ({
-      dataValid: config.mode === "demo" || dataValidation?.passed === true,
-      indexSeriesValid:
-        config.mode === "demo" || marketDataContext.indexSeriesValid,
-      sectorSeriesValid:
-        config.mode === "demo" || marketDataContext.sectorSeriesValid,
-      dailySeriesValid:
-        config.mode === "demo" || marketDataContext.dailySeriesValid,
+      dataValid: config.mode === "demo" ? historicalSession !== null && historicalSession.coverage.missingMinutes === 0 : dataValidation?.passed === true,
+      indexSeriesValid: marketDataContext.indexSeriesValid,
+      sectorSeriesValid: marketDataContext.sectorSeriesValid,
+      dailySeriesValid: marketDataContext.dailySeriesValid,
       holdingShares: selected.shares,
       sellableShares: selected.sellable,
       turnaround: selected.turnaround,
       instrumentKind: marketDataContext.instrumentKind,
-      dailyBars: config.mode === "demo" ? undefined : dailyBars,
-      now: config.mode === "demo" ? undefined : clockNow,
+      dailyBars,
+      now: config.mode === "demo"
+        ? historicalSession && latestTick ? `${historicalSession.tradeDate}T${latestTick.time}:00+08:00` : undefined
+        : clockNow,
       estimatedRoundTripCostPct: 0.08,
       expectedSlippagePct: 0.06,
     }),
@@ -987,6 +993,8 @@ export default function MarketCopilot() {
       dailyBars,
       dataValidation?.passed,
       marketDataContext,
+      historicalSession,
+      latestTick,
       selected.sellable,
       selected.shares,
       selected.turnaround,
@@ -1000,7 +1008,7 @@ export default function MarketCopilot() {
     eventRiskLocked
       ? "消息面风险锁定已开启"
       : config.mode === "demo"
-        ? "历史演练未启动，样例曲线保持静止"
+        ? "真实行情回放已暂停或尚未载入"
         : !marketStatus.allowSignals
           ? `${marketStatus.label}：${marketStatus.detail}`
         : dataValidation === null
@@ -1015,7 +1023,7 @@ export default function MarketCopilot() {
 
   const signal = useMemo(
     () =>
-      monitoringActive
+      (monitoringActive || (config.mode === "demo" && historicalSession !== null && !eventRiskLocked))
         ? baseSignal
         : {
             ...baseSignal,
@@ -1026,7 +1034,7 @@ export default function MarketCopilot() {
             reasons: [blockedReason, "冻结B/S判断，不使用静态或陈旧报价"],
             invalidation: "等待有效行情时段",
           },
-    [baseSignal, blockedReason, monitoringActive],
+    [baseSignal, blockedReason, monitoringActive, config.mode, historicalSession, eventRiskLocked],
   );
   const emptyGuide = useMemo(
     () =>
@@ -1426,16 +1434,24 @@ export default function MarketCopilot() {
   useEffect(() => {
     if (config.mode !== "demo") return;
     let active = true;
+    const controller = new AbortController();
     const load = async () => {
       setDemoPlaying(false);
       setHistoricalSession(null);
       setTicks([]);
+      setDailyBars([]);
+      setMarketDataContext(EMPTY_MARKET_CONTEXT);
+      setLastSourceTime(null);
+      setLastReceivedAt(null);
+      setSignalAlert(null);
+      signalRef.current = "blocked";
+      setSignalState("blocked");
       setConnection("connecting");
-      setFeedMessage("正在读取前一交易日真实分钟行情");
+      setFeedMessage(`正在读取${replaySession === "today" ? "今日" : "前一交易日"}真实分钟行情`);
       try {
         const response = await fetch(
-          `/quote?symbol=${selected.code}&market=${selected.market}&session=previous`,
-          { cache: "no-store" },
+          `/quote?symbol=${selected.code}&market=${selected.market}&session=${replaySession}`,
+          { cache: "no-store", signal: controller.signal },
         );
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
@@ -1443,21 +1459,26 @@ export default function MarketCopilot() {
           throw new Error("行情源未确认真实历史数据");
         }
         const tradeDate = String(payload.data?.tradeDate || "");
+        const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai" }).format(new Date());
+        if (replaySession === "today" ? tradeDate !== today : tradeDate >= today) {
+          throw new Error("返回日期与所选回放日期不一致，已拒绝载入");
+        }
         const previousClose = Number(payload.data?.previousClose);
         const bars = Array.isArray(payload.data?.minuteBars)
           ? payload.data.minuteBars
               .map((bar: Record<string, unknown>) => {
+                if (!String(bar.time).startsWith(tradeDate)) throw new Error("分钟行情中混入其他交易日期");
                 const parsedTime = parseSourceTimestamp(bar.time, Date.now());
                 return {
                   price: Number(bar.close),
                   open: Number(bar.open),
                   high: Number(bar.high),
                   low: Number(bar.low),
-                  volume: Number(bar.volume) || 1,
+                  volume: Number(bar.volume) || 0,
                   amount: Number(bar.amount) || 0,
                   time: parsedTime.minute,
-                  sectorChange: Number(bar.sectorChange),
-                  indexChange: Number(bar.indexChange),
+                  sectorChange: bar.sectorChange == null ? NaN : Number(bar.sectorChange),
+                  indexChange: bar.indexChange == null ? NaN : Number(bar.indexChange),
                   indexLevel: Number.isFinite(Number(bar.indexLevel))
                     ? Number(bar.indexLevel)
                     : undefined,
@@ -1465,27 +1486,25 @@ export default function MarketCopilot() {
               })
               .filter((bar: Tick) => Number.isFinite(bar.price) && bar.price > 0)
           : [];
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(tradeDate) || bars.length < 16) {
-          throw new Error("前一交易日真实分钟行情不完整");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(tradeDate) || bars.length < 2 || !payload.data.coverage) {
+          throw new Error("真实分钟行情不足或完整性校验信息缺失");
         }
         if (!Number.isFinite(previousClose) || previousClose <= 0) {
-          throw new Error("前一交易日前收盘价缺失");
+          throw new Error("所选交易日的前收盘价缺失");
         }
         if (!active) return;
-        setHistoricalSession({ tradeDate, ticks: bars });
+        setHistoricalSession({
+          tradeDate, previousClose, ticks: bars, coverage: payload.data.coverage,
+          warnings: [payload.data.context?.dailyError, payload.data.context?.indexError, payload.data.context?.sectorError].filter(Boolean),
+        });
+        setDailyBars((payload.data.dailyBars ?? []).filter((bar: DailyBar) => bar.date.replaceAll("-", "") < tradeDate.replaceAll("-", "")));
+        setMarketDataContext({ ...EMPTY_MARKET_CONTEXT, ...payload.data.context });
         setTicks([bars[0]]);
         tickIndexRef.current = 1;
         setLastSourceTime(`${tradeDate} ${bars[0].time}`);
         setConnection("paused");
         setFeedMessage(
           `已载入 ${tradeDate} 东方财富真实分钟行情 · ${bars.length} 根 · 等待开始演练`,
-        );
-        setHoldings((current) =>
-          current.map((holding) =>
-            holding.code === selected.code
-              ? { ...holding, price: bars[0].price, previousClose }
-              : holding,
-          ),
         );
       } catch (error) {
         if (!active) return;
@@ -1498,8 +1517,9 @@ export default function MarketCopilot() {
     void load();
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [config.mode, selected.code, selected.market]);
+  }, [config.mode, selected.code, selected.market, replaySession, replayReload]);
 
   useEffect(() => {
     if (config.mode === "demo") {
@@ -1508,7 +1528,7 @@ export default function MarketCopilot() {
         const statusTimer = window.setTimeout(() => {
           setConnection("paused");
           setFeedMessage(
-            `历史演练已暂停 · ${historicalSession.tradeDate} 东方财富真实行情`,
+            `${tickIndexRef.current >= historicalSession.ticks.length ? "已回放到数据末尾" : "历史演练已暂停"} · ${historicalSession.tradeDate} 东方财富真实行情`,
           );
         }, 0);
         return () => window.clearTimeout(statusTimer);
@@ -1516,7 +1536,7 @@ export default function MarketCopilot() {
       const statusTimer = window.setTimeout(() => {
         setConnection("connected");
         setFeedMessage(
-          `${historicalSession.tradeDate} 真实行情演练中 · 约1.2秒推进1分钟`,
+          `${historicalSession.tradeDate} 真实行情演练中 · ${replaySpeed}倍速`,
         );
       }, 0);
       const timer = window.setInterval(() => {
@@ -1533,8 +1553,8 @@ export default function MarketCopilot() {
         tickIndexRef.current += 1;
         setLastReceivedAt(receivedAt);
         setLastSourceTime(`${historicalSession.tradeDate} ${tick.time}`);
-        setTicks((current) => [...current.slice(-179), tick]);
-      }, 1200);
+        setTicks((current) => [...current, tick]);
+      }, 1200 / replaySpeed);
       return () => {
         window.clearTimeout(statusTimer);
         window.clearInterval(timer);
@@ -1794,6 +1814,7 @@ export default function MarketCopilot() {
     config,
     demoPlaying,
     historicalSession,
+    replaySpeed,
     marketStatus.allowQuotes,
     marketStatus.label,
     paused,
@@ -1905,6 +1926,10 @@ export default function MarketCopilot() {
   };
 
   const recordActualTrade = async (side: "buy" | "sell") => {
+    if (config.mode === "demo") {
+      setFeedMessage("历史回放不录入真实成交，请切回实时行情后记录券商成交回报");
+      return;
+    }
     const quantity = Math.max(0, Math.floor(Number(paperQuantity)));
     const price = Number(executionPrice);
     const fee = Math.max(0, Number(tradeFee) || 0);
@@ -2233,7 +2258,7 @@ export default function MarketCopilot() {
   const delayLabel =
     config.mode === "demo"
       ? historicalSession
-        ? `前一交易日 · ${historicalSession.tradeDate}`
+        ? `回放日期 · ${historicalSession.tradeDate}`
         : "真实历史行情加载中"
       : config.delayType === "realtime"
         ? "已声明实时"
@@ -2276,6 +2301,9 @@ export default function MarketCopilot() {
                 ) {
                   tickIndexRef.current = 1;
                   setTicks([historicalSession.ticks[0]]);
+                  setLastSourceTime(`${historicalSession.tradeDate} ${historicalSession.ticks[0].time}`);
+                  signalRef.current = "blocked";
+                  setSignalState("blocked");
                 }
                 setDemoPlaying((current) => !current);
               } else {
@@ -2341,6 +2369,30 @@ export default function MarketCopilot() {
           </span>
         )}
       </div>
+
+      {config.mode === "demo" && (
+        <section className="replay-toolbar" aria-label="真实行情回放控制">
+          <label>回放日期
+            <select value={replaySession} onChange={(event) => { setDemoPlaying(false); setReplaySession(event.target.value as "today" | "previous"); }}>
+              <option value="today">今日回放</option>
+              <option value="previous">前一交易日</option>
+            </select>
+          </label>
+          <button className="button secondary" onClick={() => { setDemoPlaying(false); setReplayReload((value) => value + 1); }}>重新载入真实行情</button>
+          <label>播放速度
+            <select value={replaySpeed} onChange={(event) => setReplaySpeed(Number(event.target.value))}>
+              <option value={1}>1倍速</option><option value={5}>5倍速</option><option value={20}>20倍速</option>
+            </select>
+          </label>
+          {historicalSession && <>
+            <strong>{historicalSession.tradeDate} · {historicalSession.coverage.complete ? "全天分钟覆盖完整" : "部分行情"}</strong>
+            <span>进度 {ticks.length}/{historicalSession.ticks.length} 根 · 源数据截至 {historicalSession.coverage.lastTime.slice(11, 16)}</span>
+            <p>{historicalSession.coverage.message}。按时间顺序回放，不补造K线；回放不会写入真实成交台账。</p>
+            {historicalSession.warnings.length > 0 && <p className="stale-warning">辅助数据提示：{historicalSession.warnings.join("；")}。日K不足时仅回放走势，B/S完整策略判断冻结。</p>}
+          </>}
+          {!historicalSession && <p role="status">{feedMessage}</p>}
+        </section>
+      )}
 
       <section className="workspace">
         <aside className="watchlist panel">
@@ -2411,10 +2463,10 @@ export default function MarketCopilot() {
                 {currentPrice > 0 ? currentPrice.toFixed(2) : "--"}
               </strong>
               <span className={change >= 0 ? "up" : "down"}>
-                {selected.previousClose > 0 ? (
+                {referenceClose > 0 ? (
                   <>
                     {change >= 0 ? "+" : ""}
-                    {(currentPrice - selected.previousClose).toFixed(2)} ·{" "}
+                    {(currentPrice - referenceClose).toFixed(2)} ·{" "}
                     {change >= 0 ? "+" : ""}
                     {change.toFixed(2)}%
                   </>
@@ -2482,7 +2534,7 @@ export default function MarketCopilot() {
           <div className="chart-wrap">
             <IntradayChart
               ticks={ticks}
-              previousClose={selected.previousClose}
+              previousClose={referenceClose}
               signal={signal}
             />
             <div className="chart-legend">
@@ -2503,7 +2555,7 @@ export default function MarketCopilot() {
               {config.mode === "demo"
                 ? historicalSession
                   ? `${historicalSession.tradeDate} · 东方财富真实分钟行情`
-                  : "前一交易日真实行情加载中"
+                  : "所选日期真实行情尚未载入"
                 : `${sourceName} · ${delayLabel}`}
             </div>
           </div>
@@ -3176,9 +3228,9 @@ export default function MarketCopilot() {
 
             {config.mode === "demo" ? (
               <div className="demo-description">
-                <strong>使用前一交易日真实分钟行情演练</strong>
+                <strong>使用今日或前一交易日真实分钟行情复盘</strong>
                 <p>
-                  数据来自东方财富公开分钟行情，载入后需手动点击“开始历史演练”推进；取数或交易日校验失败时不会回退到模拟数据。
+                  关闭此窗口后可选择“今日回放”或“前一交易日”，点击“开始历史演练”逐分钟推进。盘中仅回放已完成的K线，收盘后可重新载入全天行情；取数或日期校验失败时不会替换为其他日期或模拟数据。
                 </p>
                 <div className="demo-alert-preview" aria-label="历史提醒预览">
                   <button
